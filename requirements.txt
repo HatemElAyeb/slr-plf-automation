@@ -1,0 +1,42 @@
+# Orchestration
+langchain==0.3.25
+langchain-community==0.3.24
+langchain-ollama==0.3.2
+langgraph==0.3.21
+
+# Vector DB
+qdrant-client==1.13.3
+
+# Embeddings
+sentence-transformers==4.1.0
+
+# PDF parsing
+pymupdf==1.25.5
+pypdf==5.4.0
+
+# HTTP / APIs
+requests==2.32.3
+httpx==0.28.1
+
+# Data
+pydantic==2.11.2
+
+# Backend
+fastapi==0.115.12
+uvicorn==0.34.0
+
+# Frontend
+streamlit==1.44.1
+
+# Storage
+psycopg2-binary==2.9.10
+minio==7.2.15
+
+# Monitoring
+langfuse==2.60.3
+
+# Utilities
+python-dotenv==1.1.0
+tenacity==9.1.2
+tqdm==4.67.1
+pandas==2.2.3
