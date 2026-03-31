@@ -128,5 +128,38 @@ class QdrantIndexer:
         )
         return [r.payload for r in results]
 
+    def _point_to_paper(self, point) -> Paper:
+        """Convert a Qdrant point back into a Paper object."""
+        p = point.payload if hasattr(point, "payload") else point
+        return Paper(
+            id=p["paper_id"],
+            title=p["title"],
+            abstract=p["abstract"],
+            authors=p.get("authors", []),
+            year=p.get("year"),
+            doi=p.get("doi"),
+            source=p.get("source", ""),
+            pdf_url=p.get("pdf_url"),
+            screening_status=ScreeningStatus(p.get("screening_status", "pending")),
+        )
+
+    def get_points_by_status(self, status: ScreeningStatus):
+        """Return raw Qdrant points for a given screening status."""
+        results, _ = self.client.scroll(
+            collection_name=settings.abstracts_collection,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="screening_status",
+                        match=MatchValue(value=status.value),
+                    )
+                ]
+            ),
+            limit=10000,
+            with_payload=True,
+            with_vectors=False,
+        )
+        return results
+
     def count(self) -> int:
         return self.client.count(settings.abstracts_collection).count
