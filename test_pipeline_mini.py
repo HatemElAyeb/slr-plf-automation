@@ -12,7 +12,7 @@ from src.indexer.indexer import QdrantIndexer
 from src.screening.screener import AbstractScreener
 from src.models import ScreeningStatus
 
-QUERY = "precision livestock farming sensor"
+QUERY = "cattle lameness detection accelerometer machine learning"
 
 if __name__ == "__main__":
     # Step 1 — Collect
@@ -21,8 +21,8 @@ if __name__ == "__main__":
     papers = collector.collect(
         pubmed_query=QUERY,
         openalex_query=QUERY,
-        arxiv_query="livestock monitoring sensor",
-        arxiv_categories=["cs.AI", "cs.CV"],
+        arxiv_query="cattle cow lameness detection deep learning",
+        arxiv_categories=["cs.AI", "cs.CV", "eess.SP"],
         max_per_source=5,
     )
     print(f"Collected {len(papers)} unique papers\n")

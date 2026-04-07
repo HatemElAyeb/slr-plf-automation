@@ -11,24 +11,26 @@ from config.settings import settings
 
 
 INCLUSION_CRITERIA = """
-INCLUDE the paper ONLY if it explicitly addresses ALL of the following:
-- Animals: cattle, swine, poultry, sheep, goats, or other farm livestock (NOT pets, wildlife, or humans)
-- Technology: sensors, cameras, accelerometers, RFID, microphones, wearables, IoT devices, or computer vision APPLIED TO livestock
-- Goal: monitoring health, behavior, productivity, or welfare of farm livestock specifically
+INCLUDE the paper ONLY if it meets ALL of the following:
+- Animals: cattle, swine, poultry, sheep, or goats — specifically FARM livestock (NOT pets, wildlife, insects, aquatic animals, or humans)
+- Technology: sensors, cameras, accelerometers, RFID, microphones, wearables, IoT devices, or computer vision DIRECTLY APPLIED to farm livestock
+- Study type: original PRIMARY research — presents its own experiment, dataset, or system (NOT a literature review, survey, or meta-analysis)
+- Goal: monitoring health, behavior, productivity, or welfare of farm livestock
 
 EXCLUDE the paper if ANY of the following apply:
-- Sensor or AI technology applied to vehicles, robots, humans, or non-livestock subjects
-- Focuses only on crops, plants, or aquaculture (fish/seafood)
-- No direct application to farm animals
-- No sensor or technology component (purely economic or social studies)
+- It is a literature review, systematic review, survey, or meta-analysis
+- Animals studied are wildlife, insects, aquatic animals, pets, or humans
+- Sensor or AI technology applied to vehicles, crops, plants, or non-livestock subjects
+- No original experiment or dataset — purely theoretical or economic
 - Published before 2010
-- Not a peer-reviewed research article (editorials, conference abstracts without methodology)
 """
 
 SCREENING_PROMPT = ChatPromptTemplate.from_template("""
 You are an expert screener for a systematic literature review on Precision Livestock Farming (PLF).
 
 Your task is to decide whether the following paper should be INCLUDED or EXCLUDED based on the criteria below.
+
+IMPORTANT RULE: If the title contains any of these words — "review", "survey", "meta-analysis", "systematic", "overview", "decades", "trends" — you MUST exclude it immediately, as it is not primary research.
 
 CRITERIA:
 {criteria}
