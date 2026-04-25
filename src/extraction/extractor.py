@@ -121,7 +121,7 @@ class FullTextExtractor:
         )
         return [r.payload["text"] for r in results]
 
-    def _parse_extraction(self, raw: str, paper_id: str) -> ExtractionResult:
+    def _parse_extraction(self, raw: str, paper_id: str, source: str = "fulltext") -> ExtractionResult:
         try:
             match = re.search(r"\{.*\}", raw, re.DOTALL)
             data = json.loads(match.group() if match else raw)
@@ -133,18 +133,18 @@ class FullTextExtractor:
                 performance_metrics=data.get("performance_metrics", {}),
                 dataset_size=data.get("dataset_size", ""),
                 key_findings=data.get("key_findings", ""),
+                extraction_source=source,
             )
         except Exception:
-            return ExtractionResult(paper_id=paper_id)
+            return ExtractionResult(paper_id=paper_id, extraction_source=source)
 
-    def extract_paper(self, paper: Paper) -> ExtractionResult | None:
-        # Download PDF
-        pdf_path = download_pdf(paper)
-        if not pdf_path:
+    def _extract_from_fulltext(self, paper: Paper, pdf_path: str) -> ExtractionResult | None:
+        """Run RAG extraction on the PDF text. Returns None if parsing fails."""
+        try:
+            text = _extract_text_from_pdf(pdf_path)
+        except Exception as e:
+            print(f"  [PDF] Failed to parse {paper.id}: {e}")
             return None
-
-        # Extract + chunk text
-        text = _extract_text_from_pdf(pdf_path)
         if not text.strip():
             return None
 
@@ -152,20 +152,36 @@ class FullTextExtractor:
         if not chunks:
             return None
 
-        # Index chunks into full-text collection
         self._index_chunks(paper.id, chunks)
 
-        # RAG: retrieve most relevant chunks for extraction query
         query = "sensors used, animal species, machine learning methods, performance metrics, dataset size, key findings"
         context_chunks = self._retrieve_chunks(paper.id, query)
-        context = "\n\n---\n\n".join(context_chunks)
+        context = "\n\n---\n\n".join(context_chunks)[:6000]
 
-        # Truncate context to avoid overwhelming the LLM
-        context = context[:6000]
-
-        # LLM extraction
         raw = self.chain.invoke({"context": context})
-        return self._parse_extraction(raw, paper.id)
+        return self._parse_extraction(raw, paper.id, source="fulltext")
+
+    def _extract_from_abstract(self, paper: Paper) -> ExtractionResult:
+        """Fallback extraction using only the title + abstract."""
+        context = f"TITLE: {paper.title}\n\nABSTRACT: {paper.abstract}"
+        raw = self.chain.invoke({"context": context})
+        return self._parse_extraction(raw, paper.id, source="abstract")
+
+    def extract_paper(self, paper: Paper) -> ExtractionResult:
+        """
+        Hybrid extraction:
+          1. Try to download and extract from full PDF
+          2. If PDF unavailable or parsing fails, fall back to abstract-only
+        Always returns an ExtractionResult.
+        """
+        pdf_path = download_pdf(paper)
+        if pdf_path:
+            result = self._extract_from_fulltext(paper, pdf_path)
+            if result is not None:
+                return result
+            print(f"  [Fallback] Full-text extraction failed for {paper.id} — using abstract")
+
+        return self._extract_from_abstract(paper)
 
     def extract_included(self) -> list[ExtractionResult]:
         """Extract data from all included papers in Qdrant."""

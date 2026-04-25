@@ -37,6 +37,7 @@ class ExtractionResult(BaseModel):
     performance_metrics: dict[str, str] = Field(default_factory=dict)
     dataset_size: Optional[str] = None
     key_findings: str = ""
+    extraction_source: str = "fulltext"  # "fulltext" | "abstract"
 
 
 class SLRState(BaseModel):
