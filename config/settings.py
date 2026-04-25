@@ -24,6 +24,8 @@ class Settings(BaseModel):
     # Literature APIs
     pubmed_email: str = os.getenv("PUBMED_EMAIL", "user@example.com")
     openalex_email: str = os.getenv("OPENALEX_EMAIL", "user@example.com")
+    springer_meta_api_key: str = os.getenv("SPRINGER_META_API_KEY", "")
+    springer_oa_api_key: str = os.getenv("SPRINGER_OA_API_KEY", "")
 
     # Storage
     pdf_dir: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "pdfs")

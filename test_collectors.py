@@ -10,6 +10,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 from src.collectors.pubmed import PubMedCollector
 from src.collectors.openalex import OpenAlexCollector
 from src.collectors.arxiv import ArXivCollector
+from src.collectors.mdpi import MDPICollector
+from src.collectors.springer import SpringerCollector
 from src.collectors.collector import LiteratureCollector
 
 QUERY = "precision livestock farming sensor"
@@ -64,15 +66,45 @@ def test_arxiv():
     return papers
 
 
+def test_mdpi():
+    print("\n--- MDPI ---")
+    collector = MDPICollector()
+    papers = collector.search(QUERY, max_results=5)
+    assert len(papers) > 0, "MDPI returned 0 papers"
+    p = papers[0]
+    print(f"  First paper : {p.title[:80]}")
+    print(f"  Year        : {p.year}")
+    print(f"  DOI         : {p.doi}")
+    print(f"  PDF URL     : {p.pdf_url}")
+    print(f"  Abstract    : {p.abstract[:120]}...")
+    print(f"  PASS — {len(papers)} papers")
+    return papers
+
+
+def test_springer():
+    print("\n--- Springer ---")
+    collector = SpringerCollector()
+    papers = collector.search(QUERY, max_results=5)
+    assert len(papers) > 0, "Springer returned 0 papers"
+    p = papers[0]
+    print(f"  First paper : {p.title[:80]}")
+    print(f"  Year        : {p.year}")
+    print(f"  DOI         : {p.doi}")
+    print(f"  PDF URL     : {p.pdf_url}")
+    print(f"  Abstract    : {p.abstract[:120]}...")
+    print(f"  PASS — {len(papers)} papers")
+    return papers
+
+
 def test_deduplication():
-    print("\n--- Deduplication ---")
+    print("\n--- Deduplication (all 5 sources) ---")
     collector = LiteratureCollector()
     papers = collector.collect(
         pubmed_query=QUERY,
         openalex_query=QUERY,
         arxiv_query="livestock monitoring",
         arxiv_categories=["cs.AI", "cs.CV"],
-        max_per_source=10,
+        max_per_source=5,
     )
     assert len(papers) > 0
     ids = [p.id for p in papers]
@@ -84,9 +116,11 @@ def test_deduplication():
 if __name__ == "__main__":
     results = {}
     tests = [
-        ("PubMed", test_pubmed),
-        ("OpenAlex", test_openalex),
-        ("ArXiv", test_arxiv),
+        ("PubMed",        test_pubmed),
+        ("OpenAlex",      test_openalex),
+        ("ArXiv",         test_arxiv),
+        ("MDPI",          test_mdpi),
+        ("Springer",      test_springer),
         ("Deduplication", test_deduplication),
     ]
 

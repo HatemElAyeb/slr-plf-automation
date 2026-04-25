@@ -1,6 +1,8 @@
 from .pubmed import PubMedCollector
 from .openalex import OpenAlexCollector
 from .arxiv import ArXivCollector
+from .mdpi import MDPICollector
+from .springer import SpringerCollector
 from src.models import Paper
 from config.settings import settings
 
@@ -10,12 +12,16 @@ class LiteratureCollector:
         self.pubmed = PubMedCollector(email=settings.pubmed_email)
         self.openalex = OpenAlexCollector(email=settings.openalex_email)
         self.arxiv = ArXivCollector()
+        self.mdpi = MDPICollector()
+        self.springer = SpringerCollector()
 
     def collect(
         self,
         pubmed_query: str,
         openalex_query: str,
         arxiv_query: str,
+        mdpi_query: str | None = None,
+        springer_query: str | None = None,
         arxiv_categories: list[str] | None = None,
         max_per_source: int = 300,
     ) -> list[Paper]:
@@ -26,6 +32,8 @@ class LiteratureCollector:
         all_papers.extend(
             self.arxiv.search(arxiv_query, arxiv_categories, max_per_source)
         )
+        all_papers.extend(self.mdpi.search(mdpi_query or openalex_query, max_per_source))
+        all_papers.extend(self.springer.search(springer_query or openalex_query, max_per_source))
 
         deduplicated = self._deduplicate(all_papers)
         print(f"\n[Collector] Total after deduplication: {len(deduplicated)} papers")
