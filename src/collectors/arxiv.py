@@ -45,6 +45,11 @@ class ArXivCollector:
                     pdf_url = link.get("href")
                     break
 
+            # ArXiv auto-registers DOIs in the format 10.48550/arXiv.<id>
+            # Strip version suffix (v1, v2...) for DOI registration
+            base_id = arxiv_id.rsplit("v", 1)[0] if "v" in arxiv_id else arxiv_id
+            doi = f"10.48550/arXiv.{base_id}"
+
             papers.append(
                 Paper(
                     id=f"arxiv_{arxiv_id}",
@@ -52,7 +57,7 @@ class ArXivCollector:
                     abstract=abstract,
                     authors=authors,
                     year=year,
-                    doi=None,
+                    doi=doi,
                     source="arxiv",
                     pdf_url=pdf_url,
                 )

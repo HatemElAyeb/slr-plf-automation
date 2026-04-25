@@ -36,7 +36,7 @@ class SpringerCollector:
                 title = (rec.get("title") or "").strip()
                 abstract = (rec.get("abstract") or "").strip()
 
-                if not title or not abstract:
+                if not title or not abstract or not doi:
                     continue
 
                 authors = [

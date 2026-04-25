@@ -71,12 +71,14 @@ class PubMedCollector:
                 year_text = article.findtext(".//PubDate/Year")
                 year = int(year_text) if year_text and year_text.isdigit() else None
 
-                # DOI
+                # DOI — required, skip paper if missing
                 doi = None
                 for id_el in article.findall(".//ArticleId"):
                     if id_el.get("IdType") == "doi":
                         doi = id_el.text
                         break
+                if not doi:
+                    continue
 
                 papers.append(
                     Paper(

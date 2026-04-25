@@ -1,6 +1,6 @@
 """
 Mini end-to-end pipeline test: collect → index → screen
-5 papers per source (15 total after dedup)
+5 papers per source (up to 25 total after dedup) across all 5 sources.
 Run: python test_pipeline_mini.py
 """
 import sys
@@ -22,6 +22,8 @@ if __name__ == "__main__":
         pubmed_query=QUERY,
         openalex_query=QUERY,
         arxiv_query="cattle cow lameness detection deep learning",
+        mdpi_query=QUERY,
+        springer_query=QUERY,
         arxiv_categories=["cs.AI", "cs.CV", "eess.SP"],
         max_per_source=5,
     )

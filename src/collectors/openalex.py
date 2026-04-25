@@ -42,6 +42,8 @@ class OpenAlexCollector:
 
         year = work.get("publication_year")
         doi = work.get("doi", "").replace("https://doi.org/", "") if work.get("doi") else None
+        if not doi:
+            return None
 
         # Best open-access PDF
         pdf_url = None
