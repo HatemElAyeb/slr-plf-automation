@@ -12,10 +12,18 @@ class Settings(BaseModel):
     abstracts_collection: str = "plf_abstracts"
     fulltext_collection: str = "plf_full_text"
 
+    # LLM provider: "ollama" or "groq"
+    llm_provider: str = os.getenv("LLM_PROVIDER", "ollama")
+
     # Ollama
     ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     screening_model: str = os.getenv("SCREENING_MODEL", "llama3.1:8b")
     synthesis_model: str = os.getenv("SYNTHESIS_MODEL", "llama3.1:8b")
+
+    # Groq
+    groq_api_key: str = os.getenv("GROQ_API_KEY", "")
+    groq_screening_model: str = os.getenv("GROQ_SCREENING_MODEL", "llama-3.1-8b-instant")
+    groq_synthesis_model: str = os.getenv("GROQ_SYNTHESIS_MODEL", "llama-3.1-8b-instant")
 
     # Embeddings
     embedding_model: str = "BAAI/bge-large-en-v1.5"

@@ -4,7 +4,6 @@ import hashlib
 
 import fitz  # PyMuPDF
 from tqdm import tqdm
-from langchain_ollama import ChatOllama
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from qdrant_client import QdrantClient
@@ -14,6 +13,7 @@ from sentence_transformers import SentenceTransformer
 from src.models import Paper, ExtractionResult, ScreeningStatus
 from src.indexer.indexer import QdrantIndexer
 from src.extraction.pdf_downloader import download_pdf
+from src.llm import get_llm
 from config.settings import settings
 
 CHUNK_SIZE = 1000       # words per chunk
@@ -81,12 +81,7 @@ class FullTextExtractor:
         )
         self._ensure_fulltext_collection()
 
-        self.llm = ChatOllama(
-            model=settings.screening_model,
-            base_url=settings.ollama_base_url,
-            temperature=0,
-            format="json",
-        )
+        self.llm = get_llm(temperature=0, json_mode=True)
         self.chain = EXTRACTION_PROMPT | self.llm | StrOutputParser()
 
     def _ensure_fulltext_collection(self):

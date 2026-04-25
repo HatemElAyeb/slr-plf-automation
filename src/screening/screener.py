@@ -1,12 +1,12 @@
 import json
 import re
 from tqdm import tqdm
-from langchain_ollama import ChatOllama
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 from src.models import Paper, ScreeningResult, ScreeningStatus
 from src.indexer.indexer import QdrantIndexer
+from src.llm import get_llm
 from config.settings import settings
 
 
@@ -50,12 +50,7 @@ Respond with a JSON object only, no explanation outside the JSON:
 
 class AbstractScreener:
     def __init__(self, indexer: QdrantIndexer | None = None):
-        self.llm = ChatOllama(
-            model=settings.screening_model,
-            base_url=settings.ollama_base_url,
-            temperature=0,
-            format="json",
-        )
+        self.llm = get_llm(temperature=0, json_mode=True)
         self.chain = SCREENING_PROMPT | self.llm | StrOutputParser()
         self.indexer = indexer or QdrantIndexer()
 
