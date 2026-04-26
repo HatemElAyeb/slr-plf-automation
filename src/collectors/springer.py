@@ -2,6 +2,7 @@ import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.models import Paper
+from src.rankings import lookup_quartile, lookup_conference_rank
 from config.settings import settings
 
 META_URL = "https://api.springernature.com/meta/v2/json"
@@ -61,6 +62,25 @@ class SpringerCollector:
 
                 paper_id = f"springer_{doi.replace('/', '_')}" if doi else f"springer_{title[:40]}"
 
+                # Venue info (Springer publishes both journals and conference proceedings)
+                venue_name = rec.get("publicationName")
+                venue_issn = rec.get("issn") or rec.get("electronicIssn")
+                content_type = (rec.get("contentType") or "").lower()
+                is_conference = "conference" in content_type or "proceedings" in content_type
+
+                conference_acronym = None
+                quartile = None
+                conference_rank = None
+
+                if is_conference and venue_name:
+                    import re
+                    paren_match = re.search(r"\(([A-Z][A-Z0-9\-]{1,15})\)", venue_name)
+                    if paren_match:
+                        conference_acronym = paren_match.group(1)
+                        conference_rank = lookup_conference_rank(conference_acronym)
+                elif venue_issn:
+                    quartile = lookup_quartile(venue_issn)
+
                 papers.append(
                     Paper(
                         id=paper_id,
@@ -71,6 +91,12 @@ class SpringerCollector:
                         doi=doi or None,
                         source="springer",
                         pdf_url=pdf_url,
+                        venue_name=venue_name,
+                        venue_issn=venue_issn,
+                        is_conference=is_conference,
+                        conference_acronym=conference_acronym,
+                        quartile=quartile,
+                        conference_rank=conference_rank,
                     )
                 )
             except Exception:

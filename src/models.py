@@ -16,8 +16,17 @@ class Paper(BaseModel):
     authors: list[str] = Field(default_factory=list)
     year: Optional[int] = None
     doi: Optional[str] = None
-    source: str  # pubmed | openalex | arxiv | crossref
+    source: str  # pubmed | openalex | arxiv | mdpi | springer | ieee
     pdf_url: Optional[str] = None
+
+    # Venue metadata + rankings
+    venue_name: Optional[str] = None         # journal title or conference name
+    venue_issn: Optional[str] = None
+    is_conference: bool = False
+    conference_acronym: Optional[str] = None
+    quartile: Optional[str] = None           # Q1 | Q2 | Q3 | Q4 (for journals)
+    conference_rank: Optional[str] = None    # A* | A | B | C (for conferences)
+
     screening_status: ScreeningStatus = ScreeningStatus.PENDING
     screening_confidence: Optional[float] = None
     screening_reason: Optional[str] = None

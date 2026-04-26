@@ -172,16 +172,21 @@ class FullTextExtractor:
         Hybrid extraction:
           1. Try to download and extract from full PDF
           2. If PDF unavailable or parsing fails, fall back to abstract-only
-        Always returns an ExtractionResult.
+        Always returns an ExtractionResult and persists it to Qdrant.
         """
         pdf_path = download_pdf(paper)
+        result = None
         if pdf_path:
             result = self._extract_from_fulltext(paper, pdf_path)
-            if result is not None:
-                return result
-            print(f"  [Fallback] Full-text extraction failed for {paper.id} — using abstract")
+            if result is None:
+                print(f"  [Fallback] Full-text extraction failed for {paper.id} — using abstract")
 
-        return self._extract_from_abstract(paper)
+        if result is None:
+            result = self._extract_from_abstract(paper)
+
+        # Persist to Qdrant so Module 5 can query
+        self.indexer.update_extraction(paper.id, result)
+        return result
 
     def extract_included(self) -> list[ExtractionResult]:
         """Extract data from all included papers in Qdrant."""

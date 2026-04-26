@@ -69,6 +69,12 @@ class QdrantIndexer:
                         "doi": p.doi,
                         "source": p.source,
                         "pdf_url": p.pdf_url,
+                        "venue_name": p.venue_name,
+                        "venue_issn": p.venue_issn,
+                        "is_conference": p.is_conference,
+                        "conference_acronym": p.conference_acronym,
+                        "quartile": p.quartile,
+                        "conference_rank": p.conference_rank,
                         "screening_status": ScreeningStatus.PENDING.value,
                         "screening_confidence": None,
                         "screening_reason": None,
@@ -140,6 +146,12 @@ class QdrantIndexer:
             doi=p.get("doi"),
             source=p.get("source", ""),
             pdf_url=p.get("pdf_url"),
+            venue_name=p.get("venue_name"),
+            venue_issn=p.get("venue_issn"),
+            is_conference=p.get("is_conference", False),
+            conference_acronym=p.get("conference_acronym"),
+            quartile=p.get("quartile"),
+            conference_rank=p.get("conference_rank"),
             screening_status=ScreeningStatus(p.get("screening_status", "pending")),
         )
 
@@ -160,6 +172,53 @@ class QdrantIndexer:
             with_vectors=False,
         )
         return results
+
+    def update_extraction(self, paper_id: str, extraction):
+        """Persist extraction results to the paper's payload in Qdrant."""
+        results = self.client.scroll(
+            collection_name=settings.abstracts_collection,
+            scroll_filter=Filter(
+                must=[FieldCondition(key="paper_id", match=MatchValue(value=paper_id))]
+            ),
+            limit=1,
+        )[0]
+
+        if not results:
+            return
+
+        point_id = results[0].id
+        self.client.set_payload(
+            collection_name=settings.abstracts_collection,
+            payload={
+                "extraction_source": extraction.extraction_source,
+                "animal_species": extraction.animal_species,
+                "sensor_types": extraction.sensor_types,
+                "ml_methods": extraction.ml_methods,
+                "performance_metrics": extraction.performance_metrics,
+                "dataset_size": extraction.dataset_size,
+                "key_findings": extraction.key_findings,
+            },
+            points=[point_id],
+        )
+
+    def get_extracted_papers(self) -> list[dict]:
+        """Return all papers that have extraction data (for Module 5 synthesis)."""
+        results, _ = self.client.scroll(
+            collection_name=settings.abstracts_collection,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="screening_status",
+                        match=MatchValue(value=ScreeningStatus.INCLUDED.value),
+                    )
+                ]
+            ),
+            limit=10000,
+            with_payload=True,
+            with_vectors=False,
+        )
+        # Only return papers that actually have extraction data
+        return [r.payload for r in results if r.payload.get("extraction_source")]
 
     def count(self) -> int:
         return self.client.count(settings.abstracts_collection).count

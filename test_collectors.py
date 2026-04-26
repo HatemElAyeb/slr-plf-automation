@@ -29,6 +29,9 @@ def test_pubmed():
     print(f"  Authors     : {p.authors[:2]}")
     print(f"  DOI         : {p.doi}")
     print(f"  Source      : {p.source}")
+    print(f"  Venue       : {p.venue_name} ({p.venue_issn})")
+    print(f"  Quartile    : {p.quartile}")
+    print(f"  Conf rank   : {p.conference_rank}")
     print(f"  Abstract    : {p.abstract[:120]}...")
     print(f"  PASS — {len(papers)} papers")
     return papers
@@ -43,6 +46,9 @@ def test_openalex():
     print(f"  First paper : {p.title[:80]}")
     print(f"  Year        : {p.year}")
     print(f"  PDF URL     : {p.pdf_url}")
+    print(f"  Venue       : {getattr(p, 'venue_name', None)} ({getattr(p, 'venue_issn', None)})")
+    print(f"  Quartile    : {getattr(p, 'quartile', None)}")
+    print(f"  Conf rank   : {getattr(p, 'conference_rank', None)}")
     print(f"  Abstract    : {p.abstract[:120]}...")
     print(f"  PASS — {len(papers)} papers")
     return papers
@@ -61,6 +67,9 @@ def test_arxiv():
     print(f"  First paper : {p.title[:80]}")
     print(f"  Year        : {p.year}")
     print(f"  PDF URL     : {p.pdf_url}")
+    print(f"  Venue       : {getattr(p, 'venue_name', None)} ({getattr(p, 'venue_issn', None)})")
+    print(f"  Quartile    : {getattr(p, 'quartile', None)}")
+    print(f"  Conf rank   : {getattr(p, 'conference_rank', None)}")
     print(f"  Abstract    : {p.abstract[:120]}...")
     print(f"  PASS — {len(papers)} papers")
     return papers
@@ -76,6 +85,9 @@ def test_mdpi():
     print(f"  Year        : {p.year}")
     print(f"  DOI         : {p.doi}")
     print(f"  PDF URL     : {p.pdf_url}")
+    print(f"  Venue       : {getattr(p, 'venue_name', None)} ({getattr(p, 'venue_issn', None)})")
+    print(f"  Quartile    : {getattr(p, 'quartile', None)}")
+    print(f"  Conf rank   : {getattr(p, 'conference_rank', None)}")
     print(f"  Abstract    : {p.abstract[:120]}...")
     print(f"  PASS — {len(papers)} papers")
     return papers
@@ -91,6 +103,9 @@ def test_springer():
     print(f"  Year        : {p.year}")
     print(f"  DOI         : {p.doi}")
     print(f"  PDF URL     : {p.pdf_url}")
+    print(f"  Venue       : {getattr(p, 'venue_name', None)} ({getattr(p, 'venue_issn', None)})")
+    print(f"  Quartile    : {getattr(p, 'quartile', None)}")
+    print(f"  Conf rank   : {getattr(p, 'conference_rank', None)}")
     print(f"  Abstract    : {p.abstract[:120]}...")
     print(f"  PASS — {len(papers)} papers")
     return papers

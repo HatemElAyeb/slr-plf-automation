@@ -3,6 +3,7 @@ import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.models import Paper
+from src.rankings import lookup_quartile
 from config.settings import settings
 
 CROSSREF_URL = "https://api.crossref.org/works"
@@ -24,7 +25,7 @@ class MDPICollector:
             "query": query,
             "filter": f"member:{MDPI_MEMBER_ID},type:journal-article",
             "rows": rows,
-            "select": "DOI,title,abstract,author,published,container-title,link",
+            "select": "DOI,title,abstract,author,published,container-title,link,ISSN",
             "mailto": settings.openalex_email,
         }
         resp = requests.get(CROSSREF_URL, params=params, timeout=30)
@@ -72,6 +73,13 @@ class MDPICollector:
                 if not pdf_url:
                     pdf_url = f"https://www.mdpi.com/{doi}/pdf"
 
+                # Journal info
+                container = item.get("container-title", [])
+                venue_name = container[0] if container else None
+                issns = item.get("ISSN", [])
+                venue_issn = issns[0] if issns else None
+                quartile = lookup_quartile(venue_issn) if venue_issn else None
+
                 papers.append(
                     Paper(
                         id=f"mdpi_{doi.replace('/', '_')}",
@@ -82,6 +90,9 @@ class MDPICollector:
                         doi=doi,
                         source="mdpi",
                         pdf_url=pdf_url,
+                        venue_name=venue_name,
+                        venue_issn=venue_issn,
+                        quartile=quartile,
                     )
                 )
             except Exception:

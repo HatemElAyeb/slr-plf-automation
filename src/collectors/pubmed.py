@@ -4,6 +4,7 @@ from xml.etree import ElementTree as ET
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.models import Paper
+from src.rankings import lookup_quartile
 
 
 class PubMedCollector:
@@ -80,6 +81,11 @@ class PubMedCollector:
                 if not doi:
                     continue
 
+                # Journal info
+                venue_name = article.findtext(".//Journal/Title")
+                venue_issn = article.findtext(".//Journal/ISSN")
+                quartile = lookup_quartile(venue_issn) if venue_issn else None
+
                 papers.append(
                     Paper(
                         id=f"pubmed_{pmid}",
@@ -90,6 +96,9 @@ class PubMedCollector:
                         doi=doi,
                         source="pubmed",
                         pdf_url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else None,
+                        venue_name=venue_name,
+                        venue_issn=venue_issn,
+                        quartile=quartile,
                     )
                 )
             except Exception:
