@@ -1,6 +1,7 @@
 import json
 import re
 from tqdm import tqdm
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
@@ -8,6 +9,15 @@ from src.models import Paper, ScreeningResult, ScreeningStatus
 from src.indexer.indexer import QdrantIndexer
 from src.llm import get_llm
 from config.settings import settings
+
+
+# Retryable network/transient errors. Keep it broad — we don't want a 12-hour
+# overnight run to die because of a single hiccup.
+_RETRY_EXCEPTIONS = (
+    ConnectionError,    # generic
+    TimeoutError,       # generic
+    OSError,            # covers httpx/httpcore connection errors
+)
 
 
 INCLUSION_CRITERIA = """
@@ -49,10 +59,16 @@ Respond with a JSON object only, no explanation outside the JSON:
 
 
 class AbstractScreener:
-    def __init__(self, indexer: QdrantIndexer | None = None):
+    def __init__(
+        self,
+        indexer: QdrantIndexer | None = None,
+        criteria: str | None = None,
+    ):
         self.llm = get_llm(temperature=0, json_mode=True)
         self.chain = SCREENING_PROMPT | self.llm | StrOutputParser()
         self.indexer = indexer or QdrantIndexer()
+        # Use provided criteria or fall back to default
+        self.criteria = criteria if criteria is not None else INCLUSION_CRITERIA
 
     def _parse_response(self, raw: str) -> ScreeningResult:
         try:
@@ -76,12 +92,31 @@ class AbstractScreener:
                 reason="Failed to parse LLM response",
             )
 
-    def screen_paper(self, paper: Paper) -> ScreeningResult:
-        raw = self.chain.invoke({
-            "criteria": INCLUSION_CRITERIA,
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=2, min=2, max=60),
+        reraise=True,
+    )
+    def _invoke_chain(self, paper: Paper) -> str:
+        """LLM call wrapped with retry — bounces back from transient network errors."""
+        return self.chain.invoke({
+            "criteria": self.criteria,
             "title": paper.title,
             "abstract": paper.abstract[:2000],
         })
+
+    def screen_paper(self, paper: Paper) -> ScreeningResult:
+        try:
+            raw = self._invoke_chain(paper)
+        except Exception as e:
+            # Even after retries it failed — return EXCLUDED with low confidence
+            # so the long run continues instead of crashing.
+            print(f"  [Screener] Failed after retries on {paper.id}: {type(e).__name__}")
+            return ScreeningResult(
+                decision=ScreeningStatus.EXCLUDED,
+                confidence=0.0,
+                reason=f"LLM error after retries: {type(e).__name__}",
+            )
         return self._parse_response(raw)
 
     def screen_all(self, papers: list[Paper]) -> list[tuple[Paper, ScreeningResult]]:

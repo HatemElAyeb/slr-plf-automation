@@ -17,11 +17,17 @@ from config.settings import settings
 
 
 class QdrantIndexer:
-    def __init__(self):
+    def __init__(self, collection_suffix: str = ""):
+        """
+        collection_suffix: optional suffix for namespacing collections per question.
+            "" -> "plf_abstracts" (default, backward compatible)
+            "_q1" -> "plf_abstracts_q1"
+        """
         self.client = QdrantClient(
             host=settings.qdrant_host,
             port=settings.qdrant_port,
         )
+        self.collection_name = settings.abstracts_collection + collection_suffix
         print(f"[Indexer] Loading embedding model: {settings.embedding_model}")
         self.embedder = SentenceTransformer(settings.embedding_model)
         self._ensure_collection()
@@ -29,17 +35,17 @@ class QdrantIndexer:
     def _ensure_collection(self):
         """Create the abstracts collection if it doesn't exist."""
         existing = [c.name for c in self.client.get_collections().collections]
-        if settings.abstracts_collection not in existing:
+        if self.collection_name not in existing:
             self.client.create_collection(
-                collection_name=settings.abstracts_collection,
+                collection_name=self.collection_name,
                 vectors_config=VectorParams(
                     size=settings.embedding_dim,
                     distance=Distance.COSINE,
                 ),
             )
-            print(f"[Indexer] Created collection: {settings.abstracts_collection}")
+            print(f"[Indexer] Created collection: {self.collection_name}")
         else:
-            print(f"[Indexer] Collection already exists: {settings.abstracts_collection}")
+            print(f"[Indexer] Collection already exists: {self.collection_name}")
 
     def _embed(self, texts: list[str]) -> list[list[float]]:
         return self.embedder.encode(texts, show_progress_bar=False).tolist()
@@ -84,18 +90,18 @@ class QdrantIndexer:
             ]
 
             self.client.upsert(
-                collection_name=settings.abstracts_collection,
+                collection_name=self.collection_name,
                 points=points,
             )
             indexed += len(batch)
 
-        print(f"[Indexer] Indexed {indexed} papers into '{settings.abstracts_collection}'")
+        print(f"[Indexer] Indexed {indexed} papers into '{self.collection_name}'")
         return indexed
 
     def update_screening(self, paper_id: str, status: str, confidence: float, reason: str):
         """Update the screening result for a paper by paper_id."""
         results = self.client.scroll(
-            collection_name=settings.abstracts_collection,
+            collection_name=self.collection_name,
             scroll_filter=Filter(
                 must=[FieldCondition(key="paper_id", match=MatchValue(value=paper_id))]
             ),
@@ -107,7 +113,7 @@ class QdrantIndexer:
 
         point_id = results[0].id
         self.client.set_payload(
-            collection_name=settings.abstracts_collection,
+            collection_name=self.collection_name,
             payload={
                 "screening_status": status,
                 "screening_confidence": confidence,
@@ -119,7 +125,7 @@ class QdrantIndexer:
     def get_papers_by_status(self, status: ScreeningStatus) -> list[dict]:
         """Retrieve all papers with a given screening status."""
         results, _ = self.client.scroll(
-            collection_name=settings.abstracts_collection,
+            collection_name=self.collection_name,
             scroll_filter=Filter(
                 must=[
                     FieldCondition(
@@ -158,7 +164,7 @@ class QdrantIndexer:
     def get_points_by_status(self, status: ScreeningStatus):
         """Return raw Qdrant points for a given screening status."""
         results, _ = self.client.scroll(
-            collection_name=settings.abstracts_collection,
+            collection_name=self.collection_name,
             scroll_filter=Filter(
                 must=[
                     FieldCondition(
@@ -176,7 +182,7 @@ class QdrantIndexer:
     def update_extraction(self, paper_id: str, extraction):
         """Persist extraction results to the paper's payload in Qdrant."""
         results = self.client.scroll(
-            collection_name=settings.abstracts_collection,
+            collection_name=self.collection_name,
             scroll_filter=Filter(
                 must=[FieldCondition(key="paper_id", match=MatchValue(value=paper_id))]
             ),
@@ -188,7 +194,7 @@ class QdrantIndexer:
 
         point_id = results[0].id
         self.client.set_payload(
-            collection_name=settings.abstracts_collection,
+            collection_name=self.collection_name,
             payload={
                 "extraction_source": extraction.extraction_source,
                 "animal_species": extraction.animal_species,
@@ -204,7 +210,7 @@ class QdrantIndexer:
     def get_extracted_papers(self) -> list[dict]:
         """Return all papers that have extraction data (for Module 5 synthesis)."""
         results, _ = self.client.scroll(
-            collection_name=settings.abstracts_collection,
+            collection_name=self.collection_name,
             scroll_filter=Filter(
                 must=[
                     FieldCondition(
@@ -221,4 +227,4 @@ class QdrantIndexer:
         return [r.payload for r in results if r.payload.get("extraction_source")]
 
     def count(self) -> int:
-        return self.client.count(settings.abstracts_collection).count
+        return self.client.count(self.collection_name).count

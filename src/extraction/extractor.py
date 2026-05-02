@@ -1,11 +1,11 @@
-import json
-import re
 import hashlib
 
 import fitz  # PyMuPDF
+from pydantic import BaseModel, Field
 from tqdm import tqdm
+from tenacity import retry, stop_after_attempt, wait_exponential
 from langchain.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import PydanticOutputParser
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue
 from sentence_transformers import SentenceTransformer
@@ -16,6 +16,43 @@ from src.extraction.pdf_downloader import download_pdf
 from src.llm import get_llm
 from config.settings import settings
 
+
+class _ExtractionSchema(BaseModel):
+    """Schema for the LLM's structured output. Does NOT include paper_id or extraction_source —
+    those are filled in by us, not the LLM."""
+    animal_species: list[str] = Field(
+        default_factory=list,
+        description="Animal species studied, e.g. ['dairy cattle', 'pigs']",
+    )
+    sensor_types: list[str] = Field(
+        default_factory=list,
+        description="Sensors or technologies used, e.g. ['accelerometer', 'RFID', 'camera']",
+    )
+    ml_methods: list[str] = Field(
+        default_factory=list,
+        description="AI/ML techniques used, e.g. ['SVM', 'LSTM', 'Random Forest']",
+    )
+    performance_metrics: list[str] = Field(
+        default_factory=list,
+        description=(
+            "List of performance metrics as 'name: value' strings, e.g. "
+            "['accuracy: 91%', 'F1: 0.88', 'sensitivity: 83.94%']. "
+            "If a metric appears with multiple values (e.g. for different conditions), "
+            "include each as a SEPARATE item with a descriptive name like "
+            "'accuracy on day 0: 79%' and 'accuracy 2 days prior: 64%'. "
+            "Only include numbers that have a clear metric name in the text. "
+            "Skip raw numbers without an associated metric label."
+        ),
+    )
+    dataset_size: str = Field(
+        default="",
+        description="Number of animals or samples as a string, e.g. '120 cows'",
+    )
+    key_findings: str = Field(
+        default="",
+        description="2-3 sentence summary of the main results",
+    )
+
 CHUNK_SIZE = 1000       # words per chunk
 CHUNK_OVERLAP = 200     # overlapping words between chunks
 TOP_K_CHUNKS = 8        # chunks to retrieve per extraction query
@@ -23,18 +60,12 @@ TOP_K_CHUNKS = 8        # chunks to retrieve per extraction query
 EXTRACTION_PROMPT = ChatPromptTemplate.from_template("""
 You are extracting structured data from a scientific paper about Precision Livestock Farming.
 
-Based on the excerpts below, extract the following fields:
-- animal_species: list of animal species studied (e.g. ["dairy cattle", "pigs"])
-- sensor_types: list of sensors or technologies used (e.g. ["accelerometer", "RFID", "camera"])
-- ml_methods: list of AI/ML techniques used (e.g. ["SVM", "LSTM", "Random Forest"])
-- performance_metrics: dict of metric name to value (e.g. {{"accuracy": "91%", "F1": "0.88"}})
-- dataset_size: number of animals or samples as a string (e.g. "120 cows", "5000 samples")
-- key_findings: 2-3 sentence summary of the main results
-
 Paper excerpts:
 {context}
 
-Return a valid JSON object with exactly these keys. If a field cannot be determined from the text, use an empty list or empty string. Do NOT guess or invent values — only extract what is explicitly stated in the excerpts.
+Extract the requested fields from the excerpts above. Only include information that is explicitly stated in the text — do NOT guess or invent values. If a field cannot be determined, leave it empty.
+
+{format_instructions}
 """)
 
 
@@ -71,9 +102,14 @@ def _extract_text_from_pdf(pdf_path: str) -> str:
 
 
 class FullTextExtractor:
-    def __init__(self, indexer: QdrantIndexer | None = None):
-        self.indexer = indexer or QdrantIndexer()
+    def __init__(
+        self,
+        indexer: QdrantIndexer | None = None,
+        collection_suffix: str = "",
+    ):
+        self.indexer = indexer or QdrantIndexer(collection_suffix=collection_suffix)
         self.embedder = self.indexer.embedder
+        self.fulltext_collection = settings.fulltext_collection + collection_suffix
 
         self.ft_client = QdrantClient(
             host=settings.qdrant_host,
@@ -81,20 +117,35 @@ class FullTextExtractor:
         )
         self._ensure_fulltext_collection()
 
+        # JSON mode + Pydantic parser. Avoids Groq's flaky tool-calling validation
+        # while still getting full schema validation.
         self.llm = get_llm(temperature=0, json_mode=True)
-        self.chain = EXTRACTION_PROMPT | self.llm | StrOutputParser()
+        self.parser = PydanticOutputParser(pydantic_object=_ExtractionSchema)
+        prompt = EXTRACTION_PROMPT.partial(
+            format_instructions=self.parser.get_format_instructions(),
+        )
+        self.chain = prompt | self.llm | self.parser
+
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=2, min=2, max=60),
+        reraise=True,
+    )
+    def _invoke_chain(self, context: str) -> "_ExtractionSchema":
+        """LLM call wrapped with retry — handles transient network errors during long runs."""
+        return self.chain.invoke({"context": context})
 
     def _ensure_fulltext_collection(self):
         existing = [c.name for c in self.ft_client.get_collections().collections]
-        if settings.fulltext_collection not in existing:
+        if self.fulltext_collection not in existing:
             self.ft_client.create_collection(
-                collection_name=settings.fulltext_collection,
+                collection_name=self.fulltext_collection,
                 vectors_config=VectorParams(
                     size=settings.embedding_dim,
                     distance=Distance.COSINE,
                 ),
             )
-            print(f"[Extractor] Created collection: {settings.fulltext_collection}")
+            print(f"[Extractor] Created collection: {self.fulltext_collection}")
 
     def _index_chunks(self, paper_id: str, chunks: list[str]):
         vectors = self.embedder.encode(chunks, show_progress_bar=False).tolist()
@@ -106,12 +157,12 @@ class FullTextExtractor:
             )
             for i, (chunk, vector) in enumerate(zip(chunks, vectors))
         ]
-        self.ft_client.upsert(collection_name=settings.fulltext_collection, points=points)
+        self.ft_client.upsert(collection_name=self.fulltext_collection, points=points)
 
     def _retrieve_chunks(self, paper_id: str, query: str) -> list[str]:
         query_vector = self.embedder.encode([query], show_progress_bar=False)[0].tolist()
         results = self.ft_client.search(
-            collection_name=settings.fulltext_collection,
+            collection_name=self.fulltext_collection,
             query_vector=query_vector,
             query_filter=Filter(
                 must=[FieldCondition(key="paper_id", match=MatchValue(value=paper_id))]
@@ -121,22 +172,18 @@ class FullTextExtractor:
         )
         return [r.payload["text"] for r in results]
 
-    def _parse_extraction(self, raw: str, paper_id: str, source: str = "fulltext") -> ExtractionResult:
-        try:
-            match = re.search(r"\{.*\}", raw, re.DOTALL)
-            data = json.loads(match.group() if match else raw)
-            return ExtractionResult(
-                paper_id=paper_id,
-                animal_species=data.get("animal_species", []),
-                sensor_types=data.get("sensor_types", []),
-                ml_methods=data.get("ml_methods", []),
-                performance_metrics=data.get("performance_metrics", {}),
-                dataset_size=data.get("dataset_size", ""),
-                key_findings=data.get("key_findings", ""),
-                extraction_source=source,
-            )
-        except Exception:
-            return ExtractionResult(paper_id=paper_id, extraction_source=source)
+    def _to_result(self, schema: _ExtractionSchema, paper_id: str, source: str) -> ExtractionResult:
+        """Convert the LLM-validated schema into our internal ExtractionResult."""
+        return ExtractionResult(
+            paper_id=paper_id,
+            animal_species=schema.animal_species,
+            sensor_types=schema.sensor_types,
+            ml_methods=schema.ml_methods,
+            performance_metrics=schema.performance_metrics,
+            dataset_size=schema.dataset_size,
+            key_findings=schema.key_findings,
+            extraction_source=source,
+        )
 
     def _extract_from_fulltext(self, paper: Paper, pdf_path: str) -> ExtractionResult | None:
         """Run RAG extraction on the PDF text. Returns None if parsing fails."""
@@ -158,13 +205,22 @@ class FullTextExtractor:
         context_chunks = self._retrieve_chunks(paper.id, query)
         context = "\n\n---\n\n".join(context_chunks)[:6000]
 
-        raw = self.chain.invoke({"context": context})
-        return self._parse_extraction(raw, paper.id, source="fulltext")
+        try:
+            schema = self._invoke_chain(context)
+        except Exception as e:
+            print(f"  [LLM] Full-text extraction failed for {paper.id} after retries: {type(e).__name__}")
+            return None
+        return self._to_result(schema, paper.id, source="fulltext")
 
     def _extract_from_abstract(self, paper: Paper) -> ExtractionResult:
         """Fallback extraction using only the title + abstract."""
         context = f"TITLE: {paper.title}\n\nABSTRACT: {paper.abstract}"
-        raw = self.chain.invoke({"context": context})
+        try:
+            schema = self._invoke_chain(context)
+        except Exception as e:
+            print(f"  [LLM] Abstract extraction failed for {paper.id} after retries: {type(e).__name__}")
+            return ExtractionResult(paper_id=paper.id, extraction_source="abstract")
+        return self._to_result(schema, paper.id, source="abstract")
         return self._parse_extraction(raw, paper.id, source="abstract")
 
     def extract_paper(self, paper: Paper) -> ExtractionResult:

@@ -15,6 +15,14 @@ class LiteratureCollector:
         self.mdpi = MDPICollector()
         self.springer = SpringerCollector()
 
+    def _safe_search(self, name: str, fn, *args, **kwargs) -> list[Paper]:
+        """Run a collector's search but never let it kill the pipeline."""
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            print(f"  [{name}] FAILED: {type(e).__name__} — continuing without this source")
+            return []
+
     def collect(
         self,
         pubmed_query: str,
@@ -27,13 +35,11 @@ class LiteratureCollector:
     ) -> list[Paper]:
         all_papers: list[Paper] = []
 
-        all_papers.extend(self.pubmed.search(pubmed_query, max_per_source))
-        all_papers.extend(self.openalex.search(openalex_query, max_per_source))
-        all_papers.extend(
-            self.arxiv.search(arxiv_query, arxiv_categories, max_per_source)
-        )
-        all_papers.extend(self.mdpi.search(mdpi_query or openalex_query, max_per_source))
-        all_papers.extend(self.springer.search(springer_query or openalex_query, max_per_source))
+        all_papers.extend(self._safe_search("PubMed",   self.pubmed.search,   pubmed_query, max_per_source))
+        all_papers.extend(self._safe_search("OpenAlex", self.openalex.search, openalex_query, max_per_source))
+        all_papers.extend(self._safe_search("ArXiv",    self.arxiv.search,    arxiv_query, arxiv_categories, max_per_source))
+        all_papers.extend(self._safe_search("MDPI",     self.mdpi.search,     mdpi_query or openalex_query, max_per_source))
+        all_papers.extend(self._safe_search("Springer", self.springer.search, springer_query or openalex_query, max_per_source))
 
         deduplicated = self._deduplicate(all_papers)
         print(f"\n[Collector] Total after deduplication: {len(deduplicated)} papers")

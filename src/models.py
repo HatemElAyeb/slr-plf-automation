@@ -43,7 +43,7 @@ class ExtractionResult(BaseModel):
     animal_species: list[str] = Field(default_factory=list)
     sensor_types: list[str] = Field(default_factory=list)
     ml_methods: list[str] = Field(default_factory=list)
-    performance_metrics: dict[str, str] = Field(default_factory=dict)
+    performance_metrics: list[str] = Field(default_factory=list)
     dataset_size: Optional[str] = None
     key_findings: str = ""
     extraction_source: str = "fulltext"  # "fulltext" | "abstract"
