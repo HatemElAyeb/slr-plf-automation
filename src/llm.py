@@ -1,11 +1,23 @@
 """
-LLM factory — returns a ChatOllama or ChatGroq based on settings.llm_provider.
-Centralizes the choice so screener / extractor / synthesizer don't duplicate logic.
+LLM factory — returns a ChatOllama / ChatGroq / ChatOpenAI based on
+settings.llm_provider. Centralizes the choice so screener / extractor /
+synthesizer don't duplicate logic.
 """
 from config.settings import settings
 
 
 def get_llm(temperature: float = 0, json_mode: bool = True):
+    if settings.llm_provider == "openai":
+        from langchain_openai import ChatOpenAI
+        kwargs = {
+            "model": settings.openai_screening_model,
+            "api_key": settings.openai_api_key,
+            "temperature": temperature,
+        }
+        if json_mode:
+            kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
+        return ChatOpenAI(**kwargs)
+
     if settings.llm_provider == "groq":
         from langchain_groq import ChatGroq
         kwargs = {

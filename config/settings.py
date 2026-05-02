@@ -12,7 +12,7 @@ class Settings(BaseModel):
     abstracts_collection: str = "plf_abstracts"
     fulltext_collection: str = "plf_full_text"
 
-    # LLM provider: "ollama" or "groq"
+    # LLM provider: "ollama" | "groq" | "openai"
     llm_provider: str = os.getenv("LLM_PROVIDER", "ollama")
 
     # Ollama
@@ -24,6 +24,11 @@ class Settings(BaseModel):
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
     groq_screening_model: str = os.getenv("GROQ_SCREENING_MODEL", "llama-3.1-8b-instant")
     groq_synthesis_model: str = os.getenv("GROQ_SYNTHESIS_MODEL", "llama-3.1-8b-instant")
+
+    # OpenAI
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    openai_screening_model: str = os.getenv("OPENAI_SCREENING_MODEL", "gpt-4o-mini")
+    openai_synthesis_model: str = os.getenv("OPENAI_SYNTHESIS_MODEL", "gpt-4o-mini")
 
     # Embeddings
     embedding_model: str = "BAAI/bge-large-en-v1.5"
