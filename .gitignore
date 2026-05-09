@@ -146,8 +146,11 @@ venv.bak/
 
 # Project-specific data — large or regeneratable, don't commit
 data/pdfs/
-data/runs/
 data/missing_pdfs.csv
+# Pipeline outputs (config snapshots, reports) — regeneratable
+data/runs/*/config.json
+data/runs/*/report.md
+# (override.json files are tracked — they're pipeline inputs)
 
 # Spyder project settings
 .spyderproject

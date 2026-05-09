@@ -13,8 +13,11 @@ from src.llm import get_llm
 from src.synthesis.statistics import compute_statistics
 
 
-def _format_dist(d: dict, total: int | None = None) -> str:
-    """Format a distribution dict as a Markdown table."""
+def _format_dist(d: dict, total: int | None = None, hide_if_single: bool = False) -> str:
+    """Format a distribution dict as a Markdown table.
+    hide_if_single: if True, return None when there's 0 or 1 entries (so caller can skip the section)."""
+    if hide_if_single and len(d) <= 1:
+        return None
     if not d:
         return "_(no data)_\n"
     total = total or sum(d.values())
@@ -254,17 +257,20 @@ def generate_report(question_id: str, question_text: str, output_path: str | Non
     md.append(_format_prisma(p))
 
     md.append("\n## 4. Corpus Statistics\n")
-    md.append("\n### 4.1 Source distribution (included papers)\n")
-    md.append(_format_dist(stats["source_distribution"]))
-    md.append("\n### 4.2 Venue quartile (journals)\n")
-    md.append(_format_dist(stats["quartile_distribution"]))
-    md.append("\n### 4.3 Conference vs journal\n")
-    md.append(_format_dist(stats["venue_type_split"]))
-    if stats["conference_rank_distribution"]:
-        md.append("\n### 4.4 Conference rank (CORE)\n")
-        md.append(_format_dist(stats["conference_rank_distribution"]))
-    md.append("\n### 4.5 Year distribution\n")
-    md.append(_format_dist(stats["year_distribution"]))
+
+    def _maybe_section(title: str, dist: dict, hide_if_single: bool = True):
+        """Append section + table only if there's enough data to be informative."""
+        formatted = _format_dist(dist, hide_if_single=hide_if_single)
+        if formatted is None:
+            return  # single-row distribution, skip the whole section
+        md.append(f"\n### {title}\n")
+        md.append(formatted)
+
+    _maybe_section("4.1 Source distribution (included papers)", stats["source_distribution"])
+    _maybe_section("4.2 Venue quartile (journals)",             stats["quartile_distribution"])
+    _maybe_section("4.3 Conference vs journal",                 stats["venue_type_split"])
+    _maybe_section("4.4 Conference rank (CORE)",                stats["conference_rank_distribution"])
+    _maybe_section("4.5 Year distribution",                     stats["year_distribution"], hide_if_single=False)
 
     md.append("\n## 5. Most-frequent extracted fields\n")
     md.append("\n### 5.1 Animal species\n")

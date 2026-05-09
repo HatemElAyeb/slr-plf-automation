@@ -1,0 +1,829 @@
+{
+  "sensor_types": {
+    "3-axis accelerometer": [
+      "3-axis accelerometer"
+    ],
+    "3d point cloud": [
+      "3d point cloud"
+    ],
+    "accelerometer": [
+      "accelerometer",
+      "accelerometers",
+      "bilateral hind-limb accelerometers",
+      "tri-axial accelerometer",
+      "tri-axial imu",
+      "triaxial accelerometer"
+    ],
+    "acoustic analysis": [
+      "acoustic analysis",
+      "acoustic sensors"
+    ],
+    "activity sensor": [
+      "activity sensor"
+    ],
+    "ams sensor": [
+      "ams sensor"
+    ],
+    "audio": [
+      "audio",
+      "microphone",
+      "microphones"
+    ],
+    "automated devices": [
+      "automated devices",
+      "automated monitoring devices",
+      "automated veterinary analyzer"
+    ],
+    "automatic milking": [
+      "automatic milking",
+      "automatic milking system",
+      "automatic milking systems"
+    ],
+    "behavior monitoring sensor": [
+      "behavior monitoring sensor",
+      "behavioral detection sensors"
+    ],
+    "bluetooth": [
+      "bluetooth"
+    ],
+    "bolus sensor": [
+      "bolus sensor"
+    ],
+    "camera": [
+      "2d camera",
+      "camera",
+      "camera traps",
+      "cameras",
+      "cctv",
+      "depth camera",
+      "drone camera",
+      "external camera",
+      "kinect 2 sensors",
+      "kinect v2 camera",
+      "mobile infrared camera",
+      "pan-tilt camera",
+      "rgb",
+      "rgb camera",
+      "rgb video",
+      "rgb-d",
+      "side-view camera",
+      "surveillance cameras",
+      "top-view camera",
+      "thermal camera",
+      "thermal cameras",
+      "video",
+      "video camera",
+      "video cameras",
+      "video data",
+      "video footage",
+      "video surveillance"
+    ],
+    "cellular systems": [
+      "cellular systems"
+    ],
+    "co2": [
+      "co2"
+    ],
+    "computer vision": [
+      "computer vision"
+    ],
+    "depth image": [
+      "depth image"
+    ],
+    "ear surface temperature sensor": [
+      "ear surface temperature sensor"
+    ],
+    "ear tag": [
+      "ear tag",
+      "ear tag accelerometer"
+    ],
+    "eid ear tag": [
+      "eid ear tag"
+    ],
+    "eid reader": [
+      "eid reader"
+    ],
+    "electronic livestock scale": [
+      "electronic livestock scale"
+    ],
+    "elisa kit": [
+      "elisa kit"
+    ],
+    "fourier-transform infrared (ftir) spectroscopy": [
+      "fourier-transform infrared (ftir) spectroscopy",
+      "ftir spectroscopy"
+    ],
+    "gnss": [
+      "gnss"
+    ],
+    "gps": [
+      "gps",
+      "gps receiver module",
+      "gps trackers"
+    ],
+    "gyroscope": [
+      "gyroscope"
+    ],
+    "heart rate sensor": [
+      "heart rate sensor"
+    ],
+    "image classification": [
+      "image classification"
+    ],
+    "imu": [
+      "imu",
+      "inertial measurement unit (imu)"
+    ],
+    "in-line milk analyzers": [
+      "in-line milk analyzers"
+    ],
+    "in-tank iot device": [
+      "in-tank iot device"
+    ],
+    "infrared temperature sensors": [
+      "infrared temperature sensors"
+    ],
+    "infrared thermography": [
+      "infrared thermography"
+    ],
+    "intraruminal sensors": [
+      "intraruminal sensors"
+    ],
+    "intravaginal device": [
+      "intravaginal device"
+    ],
+    "intravaginal temperature sensor": [
+      "intravaginal temperature sensor"
+    ],
+    "iot": [
+      "iot",
+      "iot monitoring systems",
+      "iot-based sensor networks"
+    ],
+    "leg sensor": [
+      "leg sensor"
+    ],
+    "licor 7810": [
+      "licor 7810"
+    ],
+    "light sensor": [
+      "light sensor"
+    ],
+    "lora communication iot devices": [
+      "lora communication iot devices"
+    ],
+    "magnetometer": [
+      "magnetometer"
+    ],
+    "mobile application": [
+      "mobile application"
+    ],
+    "monitoring systems": [
+      "monitoring systems"
+    ],
+    "muzzle images": [
+      "muzzle images"
+    ],
+    "neck sensor": [
+      "neck sensor"
+    ],
+    "nedap cowcontrol sensors": [
+      "nedap cowcontrol sensors"
+    ],
+    "nedap smarttag leg": [
+      "nedap smarttag leg"
+    ],
+    "nedap smarttag neck": [
+      "nedap smarttag neck"
+    ],
+    "nh3": [
+      "nh3"
+    ],
+    "noseband pressure sensor": [
+      "noseband pressure sensor"
+    ],
+    "optiweigh system": [
+      "optiweigh system"
+    ],
+    "pneumatic sensors": [
+      "pneumatic sensors"
+    ],
+    "proximity sensors": [
+      "proximity sensors"
+    ],
+    "quadcopter": [
+      "quadcopter"
+    ],
+    "radio frequency identification": [
+      "radio frequency identification",
+      "rfid"
+    ],
+    "real-time polymerase chain reaction (pcr)": [
+      "real-time polymerase chain reaction (pcr)"
+    ],
+    "respiration rate sensor": [
+      "respiration rate sensor"
+    ],
+    "reticulo-ruminal temperature sensor": [
+      "reticulo-ruminal temperature sensor"
+    ],
+    "reticuloruminal bolus sensors": [
+      "reticuloruminal bolus sensors"
+    ],
+    "rh": [
+      "rh"
+    ],
+    "rumination collars": [
+      "rumination collars"
+    ],
+    "rumination monitoring tags": [
+      "rumination monitoring tags"
+    ],
+    "scrna-seq": [
+      "scrna-seq"
+    ],
+    "sem5000": [
+      "sem5000"
+    ],
+    "sensor data": [
+      "sensor data"
+    ],
+    "sensors": [
+      "sensors"
+    ],
+    "serological testing": [
+      "serological testing"
+    ],
+    "smart collars": [
+      "smart collars"
+    ],
+    "smaxtec classic boluses": [
+      "smaxtec classic boluses"
+    ],
+    "sound sensor": [
+      "sound sensor"
+    ],
+    "sulfur hexafluoride (sf6) tracer gas technique": [
+      "sulfur hexafluoride (sf6) tracer gas technique"
+    ],
+    "temperature": [
+      "temperature",
+      "temperature sensor"
+    ],
+    "thermography": [
+      "thermography"
+    ],
+    "ventilation volume": [
+      "ventilation volume"
+    ],
+    "ventral tail-base surface temperature sensor": [
+      "ventral tail-base surface temperature sensor"
+    ],
+    "wearable devices": [
+      "wearable devices",
+      "wearable motion sensor",
+      "wearable nose ring sensor",
+      "wearable sensors"
+    ],
+    "weather stations": [
+      "weather stations"
+    ],
+    "wireless sensor networks": [
+      "wireless sensor networks"
+    ],
+    "wireless transceiver": [
+      "wireless transceiver"
+    ],
+    "walk-over weighing system (wows)": [
+      "walk-over weighing system (wows)"
+    ]
+  },
+  "ml_methods": {
+    "1d convolutional neural network": [
+      "1d convolutional neural network"
+    ],
+    "actor-critic model": [
+      "actor-critic model"
+    ],
+    "adaboost": [
+      "adaboost",
+      "adaboost.m1"
+    ],
+    "ancom-bc2": [
+      "ancom-bc2"
+    ],
+    "ann": [
+      "ann",
+      "artificial neural network",
+      "artificial neural networks"
+    ],
+    "asift": [
+      "asift"
+    ],
+    "auto-encoder": [
+      "auto-encoder"
+    ],
+    "bagged tree": [
+      "bagged tree"
+    ],
+    "bayesian optimization": [
+      "bayesian optimization"
+    ],
+    "bayesian ridge regression": [
+      "bayesian ridge regression"
+    ],
+    "bernoulli naive bayes": [
+      "bernoulli naive bayes"
+    ],
+    "bi-lstm": [
+      "bi-lstm"
+    ],
+    "binary classification trees": [
+      "binary classification trees"
+    ],
+    "black box shift estimation": [
+      "black box shift estimation"
+    ],
+    "broken line regression": [
+      "broken line regression"
+    ],
+    "bytetrack": [
+      "bytetrack"
+    ],
+    "catboost": [
+      "catboost"
+    ],
+    "cellchat": [
+      "cellchat"
+    ],
+    "classification models": [
+      "classification models"
+    ],
+    "clip": [
+      "clip"
+    ],
+    "clustering": [
+      "clustering",
+      "hierarchical clustering",
+      "k-means",
+      "k-means clustering",
+      "k-medoids",
+      "subspace k-nearest neighbors (knn)",
+      "unsupervised hierarchical clustering approach (hca)"
+    ],
+    "cnn": [
+      "cnn",
+      "convnet",
+      "convnext",
+      "convolutional neural network",
+      "convolutional neural network (cnn)",
+      "convolutional neural network with lstm",
+      "convolutional neural networks (cnn)",
+      "deep convolutional neural network",
+      "multi-task cnn"
+    ],
+    "cobyla": [
+      "cobyla"
+    ],
+    "confidence-weighted decision fusion": [
+      "confidence-weighted decision fusion"
+    ],
+    "conv2d-lstm": [
+      "conv2d-lstm"
+    ],
+    "cox model": [
+      "cox model"
+    ],
+    "cplm": [
+      "cplm"
+    ],
+    "decision tree": [
+      "decision tree",
+      "decision trees",
+      "dt"
+    ],
+    "deep learning": [
+      "deep learning",
+      "deep-learning"
+    ],
+    "deep neural networks": [
+      "deep neural networks (dnn)",
+      "recurrent neural networks",
+      "recurrent neural networks (rnn)",
+      "long short-term memory",
+      "long short-term memory network",
+      "long short-term memory networks",
+      "lstm",
+      "gated recurrent unit",
+      "gated recurrent unit (gru)",
+      "gated recurrent unit models",
+      "sequential neural networks with dense layers"
+    ],
+    "densenet121": [
+      "densenet121"
+    ],
+    "deseq2": [
+      "deseq2"
+    ],
+    "detectron2": [
+      "detectron2"
+    ],
+    "detr": [
+      "detr"
+    ],
+    "dgcnn": [
+      "dgcnn"
+    ],
+    "discriminant analysis": [
+      "discriminant analysis",
+      "linear discriminant analysis",
+      "lda"
+    ],
+    "efficientnet": [
+      "efficientnetb0",
+      "efficientnetv2b0",
+      "efficientnetv2s"
+    ],
+    "elastic net": [
+      "elastic net",
+      "elasticnet regression"
+    ],
+    "ensemble": [
+      "ensemble",
+      "ensemble learning",
+      "ensemble model"
+    ],
+    "expert system": [
+      "expert system"
+    ],
+    "explainable ai": [
+      "explainable ai"
+    ],
+    "fairmot": [
+      "fairmot"
+    ],
+    "faster r-cnn": [
+      "faster r-cnn"
+    ],
+    "feed-forward multi-layer perceptron": [
+      "feed-forward multi-layer perceptron"
+    ],
+    "few-shot learning": [
+      "few-shot learning"
+    ],
+    "four-parameter logistic regression": [
+      "four-parameter logistic regression"
+    ],
+    "generalized mixed linear model": [
+      "generalized mixed linear model"
+    ],
+    "gradient boosting": [
+      "extreme gradient boosting",
+      "gradient boosting",
+      "gradient boosting decision tree",
+      "gradient boosting machine",
+      "xgboost"
+    ],
+    "graph neural network": [
+      "graph neural network (gnn)"
+    ],
+    "graph-cut based technique with k-nearest neighbours": [
+      "graph-cut based technique with k-nearest neighbours"
+    ],
+    "hidden markov model": [
+      "hidden markov model",
+      "hidden markov models"
+    ],
+    "inception-v3": [
+      "inception-v3"
+    ],
+    "k-nearest neighbors": [
+      "k-nearest neighbors",
+      "k-nearest neighbors (knn)",
+      "k-nearest neighbour",
+      "k-nearest neighbours",
+      "k-nn",
+      "knn",
+      "knn classification"
+    ],
+    "lasso regression": [
+      "lasso cox full likelihood model",
+      "lasso regression"
+    ],
+    "lazy-ibk": [
+      "lazy-ibk"
+    ],
+    "light gradient boosting machine": [
+      "light gradient boosting machine"
+    ],
+    "linear mixed model": [
+      "linear mixed model"
+    ],
+    "linear regression": [
+      "linear regression"
+    ],
+    "logistic regression": [
+      "logistic regression"
+    ],
+    "maaslin2": [
+      "maaslin2"
+    ],
+    "machine learning": [
+      "machine learning",
+      "machine learning algorithms",
+      "machine-learning methods"
+    ],
+    "markov chain monte carlo": [
+      "markov chain monte carlo (mcmc)"
+    ],
+    "mask r-cnn": [
+      "mask r-cnn",
+      "mask-rcnn"
+    ],
+    "metric-based fsl": [
+      "metric-based fsl"
+    ],
+    "minimum class confusion loss": [
+      "minimum class confusion loss"
+    ],
+    "mixed procedure in sas": [
+      "mixed procedure in sas"
+    ],
+    "ml models": [
+      "ml models"
+    ],
+    "mlp neural network": [
+      "mlp neural network",
+      "multi-layer perceptron",
+      "multilayer perceptron",
+      "multilayer perceptrons",
+      "multiple perception layer (mlp)"
+    ],
+    "mobilevit": [
+      "mobilevit"
+    ],
+    "multi-agent methodologies": [
+      "multi-agent methodologies"
+    ],
+    "multi-class support vector machine": [
+      "multi-class support vector machine"
+    ],
+    "multiple linear regression": [
+      "multiple linear regression",
+      "multiple regression analysis",
+      "multivariable linear regression"
+    ],
+    "naive bayes": [
+      "naive bayes",
+      "naïve bayes",
+      "naïve bayes multinomial"
+    ],
+    "nearest centroid": [
+      "nearest centroid"
+    ],
+    "neural network": [
+      "neural network",
+      "neural networks"
+    ],
+    "nonparametric tests": [
+      "nonparametric tests"
+    ],
+    "oc-sort": [
+      "oc-sort"
+    ],
+    "optical character recognition": [
+      "optical character recognition (ocr)"
+    ],
+    "optimization-based fsl": [
+      "optimization-based fsl"
+    ],
+    "orthogonal partial least squares discriminant analysis": [
+      "orthogonal partial least squares discriminant analysis (opls-da)"
+    ],
+    "partial least squares discriminant analysis": [
+      "partial least square discriminant analysis",
+      "partial least squares discriminant analysis",
+      "partial least squares discriminant analysis (pls-da)",
+      "pls-da"
+    ],
+    "partial tree": [
+      "partial tree"
+    ],
+    "path analysis": [
+      "path analysis"
+    ],
+    "pointnet": [
+      "pointnet"
+    ],
+    "pose estimation": [
+      "pose estimation"
+    ],
+    "principal component analysis": [
+      "principal component analysis"
+    ],
+    "prophet": [
+      "prophet"
+    ],
+    "pruning algorithm": [
+      "pruning algorithm"
+    ],
+    "qda": [
+      "qda"
+    ],
+    "r": [
+      "r (v4.5.1, drc package)"
+    ],
+    "r-fcn": [
+      "r-fcn"
+    ],
+    "random forest": [
+      "random forest",
+      "random forests"
+    ],
+    "rbg-svm": [
+      "rbg-svm"
+    ],
+    "regression": [
+      "regression"
+    ],
+    "resnet": [
+      "resnet",
+      "resnet50"
+    ],
+    "retina face": [
+      "retina face"
+    ],
+    "rexnet 3d": [
+      "rexnet 3d"
+    ],
+    "ridge regression": [
+      "ridge regression"
+    ],
+    "rnn": [
+      "rnn",
+      "rnn-lstm"
+    ],
+    "second order polynomial regression": [
+      "second order polynomial regression"
+    ],
+    "self-supervised learning": [
+      "self-supervised learning"
+    ],
+    "semiparametric tests": [
+      "semiparametric tests"
+    ],
+    "seurat": [
+      "seurat"
+    ],
+    "sift": [
+      "sift"
+    ],
+    "simulation-based approach": [
+      "simulation-based approach"
+    ],
+    "soft-voting ensemble": [
+      "soft-voting ensemble"
+    ],
+    "sparse coding spatial pyramid matching": [
+      "sparse coding spatial pyramid matching"
+    ],
+    "ssd": [
+      "ssd"
+    ],
+    "stepwise regression": [
+      "stepwise regression"
+    ],
+    "supervised machine learning": [
+      "supervised machine learning"
+    ],
+    "support vector data description": [
+      "support vector data description (svdd)",
+      "support vector data descriptions (svdd)"
+    ],
+    "support vector machine": [
+      "support vector machine",
+      "support vector machine (svm)",
+      "support vector machines (svm)",
+      "support vector regression",
+      "support vector regression (svr)",
+      "svm"
+    ],
+    "temporal adaptive recognition architecture": [
+      "temporal adaptive recognition architecture (tara)"
+    ],
+    "tiny yolov4": [
+      "tiny yolov4"
+    ],
+    "transformer": [
+      "transformer",
+      "transformer architecture",
+      "transformer-based architectures",
+      "transformers"
+    ],
+    "tree-based models": [
+      "tree-based models"
+    ],
+    "two-stage treatment regression model": [
+      "two-stage treatment regression model"
+    ],
+    "unsupervised learning": [
+      "unsupervised learning",
+      "unsupervised machine learning"
+    ],
+    "unsupervised weighted gene co-expression network analysis": [
+      "unsupervised weighted gene co-expression network analysis"
+    ],
+    "variational autoencoder": [
+      "variational autoencoder"
+    ],
+    "vgg": [
+      "vgg16",
+      "vgg16_bn"
+    ],
+    "wide resnet": [
+      "wide resnet50"
+    ],
+    "yolo": [
+      "yolo",
+      "yolo v11n",
+      "yolov11",
+      "yolov3",
+      "yolov3-ema",
+      "yolov5",
+      "yolov5-ema",
+      "yolov5n",
+      "yolov5s",
+      "yolov5x",
+      "yolov7",
+      "yolov8",
+      "yolov8-pose",
+      "yolov8n",
+      "yolov9",
+      "yolox-nano"
+    ],
+    "zebrapose": [
+      "zebrapose"
+    ],
+    "zernike moments": [
+      "zernike moments"
+    ]
+  },
+  "animal_species": {
+    "cattle": [
+      "angus",
+      "angus heifers",
+      "angus steers",
+      "beef bulls",
+      "beef calves",
+      "beef cattle",
+      "bovine",
+      "calves",
+      "cattle",
+      "cows",
+      "dairy cattle",
+      "dairy cows",
+      "holstein calves",
+      "holstein cattle",
+      "holstein cows",
+      "holstein friesian",
+      "holstein friesian cattle",
+      "holstein-friesian cattle",
+      "holstein-friesian heifers",
+      "indigenous cows",
+      "japanese black beef cattle",
+      "japanese black cattle",
+      "korean native cows (bos taurus coreanea)",
+      "nellore",
+      "nellore cattle",
+      "yak"
+    ],
+    "pigs": [
+      "pigs",
+      "sows"
+    ],
+    "poultry": [
+      "birds",
+      "broilers",
+      "laying hens",
+      "taiwan native broilers"
+    ],
+    "sheep": [
+      "sheep"
+    ],
+    "goats": [
+      "dairy goats",
+      "goat",
+      "goats"
+    ],
+    "_non_livestock_": [
+      "18 animal species",
+      "common marmosets",
+      "large herbivores",
+      "mammals",
+      "marine animals",
+      "songbird species",
+      "wild animals",
+      "wild giant pandas"
+    ]
+  }
+}

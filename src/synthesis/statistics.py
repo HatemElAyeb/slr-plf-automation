@@ -1,22 +1,67 @@
 """
 Compute SLR statistics for a question's Qdrant collection.
 No LLM calls — pure Python aggregation over stored payloads.
+Applies normalization (data/normalization_map.json) and a year cutoff.
 """
+import json
+import os
 from collections import Counter
 from src.indexer.indexer import QdrantIndexer
 from src.models import ScreeningStatus
+
+
+YEAR_CUTOFF = 2015
+NORMALIZATION_PATH = os.path.join("data", "normalization_map.json")
+NON_LIVESTOCK_TAG = "_non_livestock_"
+
+# Reverse-lookup tables loaded once
+_NORMALIZATION: dict[str, dict[str, str]] = {}
+
+
+def _load_normalization() -> dict[str, dict[str, str]]:
+    """Load and invert normalization_map.json into {category: {variant: canonical}}."""
+    global _NORMALIZATION
+    if _NORMALIZATION:
+        return _NORMALIZATION
+    if not os.path.exists(NORMALIZATION_PATH):
+        return {}
+    with open(NORMALIZATION_PATH, encoding="utf-8") as f:
+        raw = json.load(f)
+    out: dict[str, dict[str, str]] = {}
+    for category, groups in raw.items():
+        lookup: dict[str, str] = {}
+        for canonical, variants in groups.items():
+            for v in variants:
+                lookup[v.lower().strip()] = canonical.lower().strip()
+        out[category] = lookup
+    _NORMALIZATION = out
+    return out
+
+
+def _normalize(value: str, category: str) -> str | None:
+    """
+    Map a raw value to its canonical form.
+    Returns None if the canonical name is _non_livestock_ (so the caller drops it).
+    Falls back to the raw value if no mapping exists.
+    """
+    if not value:
+        return None
+    lookup = _load_normalization().get(category, {})
+    canonical = lookup.get(value.lower().strip(), value.lower().strip())
+    if canonical == NON_LIVESTOCK_TAG:
+        return None
+    return canonical
 
 
 def compute_statistics(question_id: str) -> dict:
     """
     Aggregate stats across the 'plf_abstracts_{question_id}' collection.
     Returns a dict with PRISMA counts, source/quartile/year distributions,
-    and frequency counts of extracted fields.
+    and frequency counts of normalized extracted fields.
     """
     suffix = "_" + question_id
     ix = QdrantIndexer(collection_suffix=suffix)
 
-    # Pull every paper's payload once
     points = ix.client.scroll(
         collection_name=ix.collection_name,
         limit=100000,
@@ -26,9 +71,13 @@ def compute_statistics(question_id: str) -> dict:
     payloads = [p.payload for p in points]
 
     total = len(payloads)
-    included = [p for p in payloads if p.get("screening_status") == ScreeningStatus.INCLUDED.value]
+    included_all = [p for p in payloads if p.get("screening_status") == ScreeningStatus.INCLUDED.value]
     excluded = [p for p in payloads if p.get("screening_status") == ScreeningStatus.EXCLUDED.value]
     pending  = [p for p in payloads if p.get("screening_status") == ScreeningStatus.PENDING.value]
+
+    # Year filter: drop papers with year < 2015 from included corpus
+    included = [p for p in included_all if (p.get("year") or 0) >= YEAR_CUTOFF]
+    dropped_old = len(included_all) - len(included)
 
     # Distinguish genuine exclusions from rate-limit failures
     failed_screening = [p for p in excluded if "LLM error" in (p.get("screening_reason") or "")]
@@ -46,9 +95,11 @@ def compute_statistics(question_id: str) -> dict:
 
     # PRISMA counts
     prisma = {
-        "identified":            total,                  # after dedup at collection time
+        "identified":            total,
         "screened":              total - len(pending),
         "included":              len(included),
+        "included_pre_year_filter": len(included_all),
+        "dropped_pre_2015":      dropped_old,
         "excluded":              len(excluded),
         "excluded_genuine":      len(excluded) - len(failed_screening),
         "screening_failed":      len(failed_screening),
@@ -58,38 +109,35 @@ def compute_statistics(question_id: str) -> dict:
         "missing_pdfs":          len(extracted_abstract),
     }
 
-    # Source distribution (across included)
-    source_dist = Counter(p.get("source", "unknown") for p in included)
-
-    # Quartile distribution (journals only — conferences have None)
+    source_dist  = Counter(p.get("source", "unknown") for p in included)
     quartile_dist = Counter(p.get("quartile") or "unranked" for p in included)
-
-    # Conference rank distribution
     conf_rank_dist = Counter(
         p.get("conference_rank") or "unranked"
         for p in included if p.get("is_conference")
     )
-
-    # Conference vs journal split
     venue_type = Counter(
         "conference" if p.get("is_conference") else "journal"
         for p in included
     )
-
-    # Year distribution
     year_dist = Counter(p.get("year") for p in included if p.get("year"))
 
-    # Top extracted fields (frequency counts across extracted papers)
+    # Normalized frequency counters
     species_counter = Counter()
     sensor_counter = Counter()
     method_counter = Counter()
     for p in extracted:
         for s in p.get("animal_species") or []:
-            species_counter[s.lower().strip()] += 1
+            n = _normalize(s, "animal_species")
+            if n:
+                species_counter[n] += 1
         for s in p.get("sensor_types") or []:
-            sensor_counter[s.lower().strip()] += 1
+            n = _normalize(s, "sensor_types")
+            if n:
+                sensor_counter[n] += 1
         for m in p.get("ml_methods") or []:
-            method_counter[m.lower().strip()] += 1
+            n = _normalize(m, "ml_methods")
+            if n:
+                method_counter[n] += 1
 
     return {
         "prisma": prisma,
@@ -101,6 +149,6 @@ def compute_statistics(question_id: str) -> dict:
         "top_animal_species":       dict(species_counter.most_common(15)),
         "top_sensor_types":         dict(sensor_counter.most_common(15)),
         "top_ml_methods":           dict(method_counter.most_common(15)),
-        "included_papers":          included,        # full payloads for the report
+        "included_papers":          included,
         "extracted_papers":         extracted,
     }

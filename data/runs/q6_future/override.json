@@ -1,0 +1,14 @@
+{
+  "queries": {
+    "pubmed_query": "(precision livestock farming OR \"smart farming\" OR \"livestock monitoring\" OR \"animal monitoring\") AND (\"explainable AI\" OR XAI OR interpretab* OR explain* OR transparen* OR \"model robustness\" OR \"uncertainty quantification\" OR SHAP OR LIME OR Grad-CAM OR \"trust*\" OR \"human-AI\")",
+    "arxiv_query": "(livestock OR cattle OR cow OR pig OR poultry) AND (explainable OR interpretable OR XAI OR SHAP OR \"Grad-CAM\" OR robustness OR trust)",
+    "openalex_query": "precision livestock farming explainable AI interpretability robustness trust",
+    "mdpi_query": "livestock farming explainable AI interpretability XAI",
+    "springer_query": "(precision livestock farming OR smart farming OR livestock) AND (\"explainable AI\" OR XAI OR interpretab* OR \"model robustness\" OR trust)",
+    "arxiv_categories": ["cs.AI", "cs.LG", "cs.CV", "cs.CY"]
+  },
+  "criteria": {
+    "include": "- Animals: cattle, swine, poultry, sheep, goats, or general livestock\n- Focus: addresses ANY of: AI model interpretability, explainability, transparency, robustness, uncertainty quantification, trust, fairness, or human-AI interaction in livestock-related applications\n- Study type: original primary research, evaluations, surveys, narrative reviews, systematic reviews, position papers — ALL are eligible (this is an emerging field)\n- Methods of interest: SHAP, LIME, Grad-CAM, attention visualization, counterfactual explanations, robustness testing, adversarial evaluation, uncertainty estimation\n- Year: 2015 or later",
+    "exclude": "- Studies on non-livestock animals (wildlife, pets, aquatic animals, insects) or on humans/medical applications\n- Pure AI/ML methodology papers with NO livestock application\n- Crop or aquaculture papers\n- Publications prior to 2015"
+  }
+}

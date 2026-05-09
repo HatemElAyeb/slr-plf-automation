@@ -1,0 +1,14 @@
+{
+  "queries": {
+    "pubmed_query": "(precision livestock farming OR smart farming OR digital agriculture OR precision agriculture) AND (adoption OR acceptance OR uptake OR diffusion OR implementation) AND (barrier* OR challenge* OR obstacle* OR factor* OR perception* OR willingness OR \"technology acceptance\" OR \"diffusion of innovation\")",
+    "arxiv_query": "(precision livestock farming OR smart farming OR digital agriculture) AND (adoption OR acceptance OR barrier OR perception)",
+    "openalex_query": "precision livestock farming technology adoption barriers acceptance farmer perception",
+    "mdpi_query": "precision livestock farming adoption barriers farmer perception",
+    "springer_query": "(precision livestock farming OR smart farming) AND (adoption OR acceptance) AND (barrier* OR perception* OR \"technology acceptance\")",
+    "arxiv_categories": ["cs.CY", "cs.HC", "econ.GN"]
+  },
+  "criteria": {
+    "include": "- Animals: cattle, swine, poultry, sheep, goats, or general livestock\n- Focus: identifies, discusses, or analyzes barriers (technical, economic, socio-cultural, regulatory) to the adoption or implementation of Precision Livestock Farming (PLF) or smart farming technologies\n- Study type: ANY of the following are eligible — surveys, qualitative studies, quantitative studies, economic analyses, case studies, technology acceptance model (TAM) studies, diffusion-of-innovation studies, position papers, narrative reviews, systematic reviews, scoping reviews\n- Year: 2015 or later",
+    "exclude": "- Studies focused exclusively on technical sensor or AI development WITHOUT discussing adoption, implementation, or barriers\n- Studies on non-livestock animals (wildlife, pets, aquatic animals, insects)\n- Papers on crop farming or aquaculture only (no livestock component)\n- Publications prior to 2015\n- Editorials, news pieces, or short opinion pieces (under ~3 pages)"
+  }
+}

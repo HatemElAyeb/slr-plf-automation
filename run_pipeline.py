@@ -32,6 +32,23 @@ from src.models import ScreeningStatus
 MAX_PER_SOURCE = 200  # ~1000 papers per question before dedup, ~700 unique after
 
 
+def _load_override(qid: str) -> dict:
+    """
+    If data/runs/{qid}/override.json exists, return its contents.
+    Schema (any subset is allowed):
+      {
+        "queries":  { pubmed_query, openalex_query, arxiv_query,
+                      mdpi_query, springer_query, arxiv_categories },
+        "criteria": { include, exclude }
+      }
+    """
+    path = os.path.join("data", "runs", qid, "override.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
 def run_one(question: dict):
     qid = question["id"]
     qtext = question["text"]
@@ -42,18 +59,31 @@ def run_one(question: dict):
     print(f"# Question: {qtext}")
     print('#'*70)
 
-    # --- 1. Build queries ---
-    print("\n[1/6] Building queries via LLM...")
-    queries = build_queries(qtext)
+    override = _load_override(qid)
+    if override:
+        print(f"\n[OVERRIDE] Loaded data/runs/{qid}/override.json — "
+              f"keys: {list(override.keys())}")
+
+    # --- 1. Build queries (or use override) ---
+    if "queries" in override:
+        print("\n[1/6] Using override queries (skipping LLM query builder)...")
+        queries = override["queries"]
+    else:
+        print("\n[1/6] Building queries via LLM...")
+        queries = build_queries(qtext)
     print(f"  pubmed   : {queries['pubmed_query'][:80]}...")
     print(f"  arxiv    : {queries['arxiv_query'][:80]}...")
     print(f"  categories: {queries['arxiv_categories']}")
 
-    # --- 2. Build criteria ---
-    print("\n[2/6] Building inclusion/exclusion criteria via LLM...")
-    criteria_dict = build_criteria(qtext)
+    # --- 2. Build criteria (or use override) ---
+    if "criteria" in override:
+        print("\n[2/6] Using override criteria (skipping LLM criteria builder)...")
+        criteria_dict = override["criteria"]
+    else:
+        print("\n[2/6] Building inclusion/exclusion criteria via LLM...")
+        criteria_dict = build_criteria(qtext)
     criteria_text = format_criteria(criteria_dict)
-    print(f"  Generated criteria ({len(criteria_text)} chars)")
+    print(f"  Criteria ({len(criteria_text)} chars)")
 
     # --- 3. Collect ---
     print("\n[3/6] Collecting papers from all 5 sources...")

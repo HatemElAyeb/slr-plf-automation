@@ -128,13 +128,26 @@ if page == "🏠 Overview":
 
     st.markdown("### Research questions")
     for q in QUESTIONS:
+        # Try to compute live stats from Qdrant (always current).
+        # Fall back to config.json only if the collection doesn't exist yet.
+        live_stats = None
+        try:
+            live_stats = get_stats(q["id"])
+        except Exception:
+            pass
         config = load_run_config(q["id"])
-        status = "✅ run completed" if config else "⏳ not yet run"
+        status = "✅ run completed" if (live_stats or config) else "⏳ not yet run"
         with st.expander(f"**{q['id']}** ({q['category']}) — {status}"):
             st.write(q["text"])
-            if config:
+            c = st.columns(4)
+            if live_stats:
+                p = live_stats["prisma"]
+                c[0].metric("Collected", p["identified"])
+                c[1].metric("Included", p["included"])
+                c[2].metric("Extracted (FT)", p["extracted_fulltext"])
+                c[3].metric("Extracted (abs)", p["extracted_abstract"])
+            elif config:
                 r = config.get("results", {})
-                c = st.columns(4)
                 c[0].metric("Collected", r.get("collected_after_dedup", "—"))
                 c[1].metric("Included", r.get("included", "—"))
                 c[2].metric("Extracted (FT)", r.get("extracted_fulltext", "—"))
@@ -234,14 +247,22 @@ elif page == "📚 Browse papers":
                     filt["authors"].str.lower().str.contains(s, na=False)]
 
     st.caption(f"Showing {len(filt)} of {len(df)} papers")
-    display_cols = ["year", "title", "authors", "source", "venue", "quartile",
+    # Reset filtered index so the visible row numbers match what you type below
+    filt = filt.reset_index(drop=True)
+    filt.insert(0, "row", filt.index)
+    display_cols = ["row", "year", "title", "authors", "source", "venue", "quartile",
                     "screening_status", "extraction_source"]
-    st.dataframe(filt[display_cols], use_container_width=True, height=500)
+    st.dataframe(filt[display_cols], use_container_width=True, height=500, hide_index=True)
 
     # Drill-down
     st.markdown("### Paper detail")
     if not filt.empty:
-        idx = st.number_input("Row index to inspect (from filtered table above)", 0, len(filt) - 1, 0)
+        idx = st.number_input(
+            "Row to inspect (the 'row' column in the table above)",
+            min_value=0,
+            max_value=len(filt) - 1,
+            value=0,
+        )
         row = filt.iloc[int(idx)]
         st.markdown(f"#### {row['title']}")
         st.write(f"**Authors:** {row['authors']}  \n"
