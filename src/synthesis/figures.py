@@ -202,12 +202,24 @@ def _slugify(s: str) -> str:
     return s.strip("_")[:60]
 
 
-def generate_figures_for_question(question: dict, papers: list[dict]) -> list[dict]:
+# Skip figures whose total flow is below this — they look empty and
+# are not informative in a report.
+MIN_FLOW_FOR_REPORT = 10
+
+
+def generate_figures_for_question(
+    question: dict,
+    papers: list[dict],
+    min_flow: int = MIN_FLOW_FOR_REPORT,
+) -> list[dict]:
     """
     Generate every Sankey diagram declared in question["sankey_diagrams"].
-    Returns a list of {"title": ..., "stages": ..., "rel_path": ..., "data": ...}
-    so the caller (report) can embed images and (Streamlit) can re-render
-    interactively from the same data.
+    Returns a list of dicts:
+        {"title", "stages", "rel_path", "data", "total_flow", "skipped"}
+
+    A figure is "skipped" (no PNG written, rel_path = None) when its
+    total_flow < min_flow. The data is still returned so Streamlit can
+    render it interactively if the user wants to inspect sparse figures.
     """
     qid = question["id"]
     diagrams = question.get("sankey_diagrams") or []
@@ -223,8 +235,22 @@ def generate_figures_for_question(question: dict, papers: list[dict]) -> list[di
         stages = spec["stages"]
         max_per = spec.get("max_per_stage", 8)
         data = compute_sankey_data(papers, stages, max_per_stage=max_per)
-        fig = make_sankey_figure(data, title, stages)
+        total_flow = sum(data["value"]) if data["value"] else 0
 
+        # Skip the PNG when the diagram is too sparse to be informative.
+        if total_flow < min_flow:
+            print(f"  [Figures] {qid} '{title}' skipped (total_flow={total_flow} < {min_flow})")
+            results.append({
+                "title":      title,
+                "stages":     stages,
+                "rel_path":   None,
+                "data":       data,
+                "total_flow": total_flow,
+                "skipped":    True,
+            })
+            continue
+
+        fig = make_sankey_figure(data, title, stages)
         fname = f"sankey_{_slugify(title)}.png"
         abs_path = os.path.join(out_dir, fname)
         try:
@@ -235,9 +261,11 @@ def generate_figures_for_question(question: dict, papers: list[dict]) -> list[di
             saved = False
 
         results.append({
-            "title":    title,
-            "stages":   stages,
-            "rel_path": os.path.join("figures", fname) if saved else None,
-            "data":     data,
+            "title":      title,
+            "stages":     stages,
+            "rel_path":   f"figures/{fname}" if saved else None,
+            "data":       data,
+            "total_flow": total_flow,
+            "skipped":    False,
         })
     return results

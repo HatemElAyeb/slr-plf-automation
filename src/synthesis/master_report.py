@@ -200,8 +200,10 @@ def generate_master_report(output_path: str | None = None) -> str:
     md.append("```\n")
 
     md.append("\n## 4. Per-question summary\n")
-    md.append("| Question | Category | Identified | Included | FT | Abstract | % Q1 |\n")
-    md.append("|---|---|---:|---:|---:|---:|---:|\n")
+    table_lines = [
+        "| Question | Category | Identified | Included | FT | Abstract | % Q1 |",
+        "|---|---|---:|---:|---:|---:|---:|",
+    ]
     for q in QUESTIONS:
         s = per_q_stats.get(q["id"])
         if not s:
@@ -209,12 +211,12 @@ def generate_master_report(output_path: str | None = None) -> str:
         p = s["prisma"]
         q1 = s["quartile_distribution"].get("Q1", 0)
         q1_pct = (q1 / p["included"] * 100) if p["included"] else 0
-        md.append(
+        table_lines.append(
             f"| {q['id']} | {q['category']} | {p['identified']} | "
             f"{p['included']} | {p['extracted_fulltext']} | "
             f"{p['extracted_abstract']} | {q1_pct:.0f}% |"
         )
-    md.append("")
+    md.append("\n".join(table_lines) + "\n")
 
     md.append("\n## 5. Aggregate top extractions (across all included papers)\n")
 
@@ -222,10 +224,10 @@ def generate_master_report(output_path: str | None = None) -> str:
         if not c:
             return
         md.append(f"\n### 5.{name}\n")
-        md.append("| Value | Count |\n|---|---:|\n")
+        rows = ["| Value | Count |", "|---|---:|"]
         for k, v in c.most_common(n):
-            md.append(f"| {k} | {v} |")
-        md.append("")
+            rows.append(f"| {k} | {v} |")
+        md.append("\n".join(rows) + "\n")
     _table("1 Animal species", species)
     _table("2 Sensor types",   sensors)
     _table("3 ML methods",     methods)

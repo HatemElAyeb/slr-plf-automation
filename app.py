@@ -362,6 +362,27 @@ elif page == "📊 Statistics":
             use_container_width=True,
         )
 
+    # Question-specific custom field distributions
+    custom = stats.get("custom_fields") or {}
+    if custom:
+        st.markdown("---")
+        st.subheader("Question-specific extracted fields")
+        # Render two charts per row when there are several custom fields
+        items = [(name, dist) for name, dist in custom.items() if dist]
+        for i in range(0, len(items), 2):
+            row = items[i : i + 2]
+            row_cols = st.columns(len(row))
+            for j, (fname, dist) in enumerate(row):
+                pretty = fname.replace("_", " ").title()
+                row_cols[j].plotly_chart(
+                    px.bar(x=list(dist.values()),
+                           y=list(dist.keys()),
+                           orientation="h",
+                           title=f"Top {pretty}",
+                           labels={"x": "Count", "y": pretty}),
+                    use_container_width=True,
+                )
+
 
 # =============================================================
 # PAGE: FLOW DIAGRAMS
@@ -391,7 +412,7 @@ elif page == "🌊 Flow diagrams":
     )
     question = next(q for q in diag_questions if q["id"] == qid)
 
-    from src.synthesis.figures import compute_sankey_data, make_sankey_figure
+    from src.synthesis.figures import compute_sankey_data, make_sankey_figure, MIN_FLOW_FOR_REPORT
     stats = get_stats(qid)
     papers = stats["included_papers"]
 
@@ -399,20 +420,44 @@ elif page == "🌊 Flow diagrams":
         st.warning("No included papers for this question.")
         st.stop()
 
+    show_sparse = st.checkbox(
+        f"Show sparse diagrams (total flow < {MIN_FLOW_FOR_REPORT})",
+        value=False,
+        help="Sparse diagrams aren't included in the markdown report. "
+             "Toggle on to inspect them here anyway.",
+    )
+
+    rendered_any = False
     for spec in question["sankey_diagrams"]:
-        st.markdown(f"### {spec['title']}")
-        stages_str = " → ".join(s.replace("_", " ").title() for s in spec["stages"])
-        st.caption(f"Stages: {stages_str}")
         try:
             data = compute_sankey_data(
                 papers,
                 spec["stages"],
                 max_per_stage=spec.get("max_per_stage", 8),
             )
+        except Exception as e:
+            st.error(f"{spec['title']} — could not compute: {type(e).__name__}: {e}")
+            continue
+
+        total_flow = sum(data["value"]) if data["value"] else 0
+        if total_flow < MIN_FLOW_FOR_REPORT and not show_sparse:
+            continue
+
+        rendered_any = True
+        st.markdown(f"### {spec['title']}")
+        stages_str = " → ".join(s.replace("_", " ").title() for s in spec["stages"])
+        st.caption(f"Stages: {stages_str} · total flow: {total_flow}")
+        if total_flow < MIN_FLOW_FOR_REPORT:
+            st.warning("This diagram is sparse — not included in the markdown report.")
+        try:
             fig = make_sankey_figure(data, spec["title"], spec["stages"])
             st.plotly_chart(fig, use_container_width=True)
         except Exception as e:
             st.error(f"Could not render: {type(e).__name__}: {e}")
+
+    if not rendered_any:
+        st.info(f"All diagrams for this question are below the flow threshold "
+                f"({MIN_FLOW_FOR_REPORT}). Toggle the checkbox above to inspect them.")
 
 
 # =============================================================
@@ -421,28 +466,66 @@ elif page == "🌊 Flow diagrams":
 elif page == "📄 Report":
     st.title("Report viewer")
     runs = list_completed_runs()
-    if not runs:
+    master_exists = os.path.exists(os.path.join("data", "runs", "master_report.md"))
+
+    if not runs and not master_exists:
         st.info("No runs completed yet.")
         st.stop()
 
-    qid = st.selectbox("Question", runs)
-    report_path = os.path.join("data", "runs", qid, "report.md")
+    # Build the dropdown: master report first (if available), then per-question
+    options = []
+    if master_exists:
+        options.append("master_report")
+    options += runs
+
+    selection = st.selectbox(
+        "Report",
+        options,
+        format_func=lambda o: "🌐 Master report (project-wide)" if o == "master_report"
+                              else f"📄 {o}",
+    )
+
+    if selection == "master_report":
+        report_path = os.path.join("data", "runs", "master_report.md")
+        download_name = "master_report.md"
+    else:
+        report_path = os.path.join("data", "runs", selection, "report.md")
+        download_name = f"{selection}_report.md"
 
     if not os.path.exists(report_path):
-        st.warning("Report not generated yet for this question.")
-        if st.button("Generate report now"):
+        st.warning("Report not generated yet.")
+        if selection != "master_report" and st.button("Generate report now"):
             with st.spinner("Generating report..."):
                 from src.synthesis import generate_report
-                question_text = next((q["text"] for q in QUESTIONS if q["id"] == qid), qid)
-                generate_report(qid, question_text)
+                question_text = next((q["text"] for q in QUESTIONS if q["id"] == selection), selection)
+                generate_report(selection, question_text)
             st.rerun()
     else:
         with open(report_path, encoding="utf-8") as f:
             text = f.read()
         st.download_button(
             "⬇️ Download report.md", data=text,
-            file_name=f"{qid}_report.md", mime="text/markdown",
+            file_name=download_name, mime="text/markdown",
         )
+
+        # Inline relative figure paths as base64 data URLs so Streamlit
+        # can display them (it doesn't resolve paths relative to the .md).
+        import base64, re
+        report_dir = os.path.dirname(report_path)
+
+        def _inline(match: re.Match) -> str:
+            alt, rel = match.group(1), match.group(2)
+            # Accept both / and \ separators; resolve relative to the report dir
+            rel_norm = rel.replace("\\", "/")
+            abs_path = os.path.join(report_dir, *rel_norm.split("/"))
+            if not os.path.exists(abs_path):
+                return f"_(missing figure: {rel})_"
+            with open(abs_path, "rb") as fh:
+                b64 = base64.b64encode(fh.read()).decode("ascii")
+            return f"![{alt}](data:image/png;base64,{b64})"
+
+        # Match figures referenced with either / or \ as separator
+        text = re.sub(r"!\[([^\]]*)\]\((figures[/\\][^)]+\.png)\)", _inline, text)
         st.markdown(text)
 
 

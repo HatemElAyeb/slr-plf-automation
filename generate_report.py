@@ -32,8 +32,13 @@ def _run_figures_only(selected: list[dict]):
             continue
         figs = generate_figures_for_question(q, stats["included_papers"])
         for f in figs:
-            ok = "✓" if f.get("rel_path") else "✗"
-            print(f"  {ok} {f['title']} -> {f.get('rel_path') or 'FAILED'}")
+            if f.get("rel_path"):
+                tag = "[ok]"
+            elif f.get("skipped"):
+                tag = "[skip]"
+            else:
+                tag = "[fail]"
+            print(f"  {tag} {f['title']} -> {f.get('rel_path') or 'no png'}")
 
 
 if __name__ == "__main__":

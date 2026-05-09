@@ -275,11 +275,6 @@ def generate_report(
     md.append(f"# Systematic Literature Review — {question_id}\n")
     md.append(f"**Research question:** {question_text}\n")
     md.append(f"**Generated:** {datetime.datetime.now().isoformat(timespec='seconds')}\n")
-    md.append(
-        "\n> **Note:** This is a per-question report. For the project-wide "
-        "introduction, methodology, and cross-question synthesis, see "
-        "`master_report.md`.\n"
-    )
     md.append("\n---\n\n## 1. Introduction\n")
     md.append(sections["Introduction"] + "\n")
 
@@ -310,37 +305,44 @@ def generate_report(
     md.append("\n### 4.3 ML methods\n")
     md.append(_format_dist(stats["top_ml_methods"]))
 
+    # Track section numbers dynamically since some sections are conditional
+    section_num = 4
+
     # Question-specific custom field distributions
     custom = stats.get("custom_fields") or {}
     if custom:
-        md.append("\n## 4.bis Question-specific extracted fields\n")
+        section_num += 1
+        md.append(f"\n## {section_num}. Question-specific extracted fields\n")
         for i, (fname, dist) in enumerate(custom.items(), start=1):
             pretty = fname.replace("_", " ").title()
-            md.append(f"\n### 4.bis.{i} {pretty}\n")
+            md.append(f"\n### {section_num}.{i} {pretty}\n")
             md.append(_format_dist(dist) or "_(no data)_\n")
 
-    # Sankey / flow diagrams
-    if figures:
-        md.append("\n## 4.ter Flow diagrams\n")
-        for f in figures:
+    # Sankey / flow diagrams — only embed figures that have enough data
+    renderable = [f for f in figures if f.get("rel_path") and not f.get("skipped")]
+    if renderable:
+        section_num += 1
+        md.append(f"\n## {section_num}. Flow diagrams\n")
+        for f in renderable:
             md.append(f"\n### {f['title']}\n")
             stages_str = " → ".join(s.replace("_", " ").title() for s in f["stages"])
             md.append(f"_Stages:_ {stages_str}\n")
-            if f.get("rel_path"):
-                md.append(f"\n![{f['title']}]({f['rel_path']})\n")
-            else:
-                md.append("_(figure could not be rendered)_\n")
+            md.append(f"\n![{f['title']}]({f['rel_path']})\n")
 
-    md.append("\n## 5. Results\n")
+    section_num += 1
+    md.append(f"\n## {section_num}. Results\n")
     md.append(sections["Results"] + "\n")
 
-    md.append("\n## 6. Discussion\n")
+    section_num += 1
+    md.append(f"\n## {section_num}. Discussion\n")
     md.append(sections["Discussion"] + "\n")
 
-    md.append("\n## 7. Conclusion\n")
+    section_num += 1
+    md.append(f"\n## {section_num}. Conclusion\n")
     md.append(sections["Conclusion"] + "\n")
 
-    md.append("\n## 8. Included Papers\n")
+    section_num += 1
+    md.append(f"\n## {section_num}. Included Papers\n")
     for paper in stats["included_papers"]:
         authors = "; ".join((paper.get("authors") or [])[:3])
         if len(paper.get("authors") or []) > 3:
