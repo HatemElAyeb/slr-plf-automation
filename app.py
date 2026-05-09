@@ -37,8 +37,8 @@ page = st.sidebar.radio(
         "▶️ Run pipeline",
         "📚 Browse papers",
         "📊 Statistics",
+        "🌊 Flow diagrams",
         "📄 Report",
-        "🔍 Compare questions",
         "📤 Missing PDFs",
     ],
 )
@@ -364,6 +364,58 @@ elif page == "📊 Statistics":
 
 
 # =============================================================
+# PAGE: FLOW DIAGRAMS
+# =============================================================
+elif page == "🌊 Flow diagrams":
+    st.title("Flow diagrams")
+    st.markdown("Sankey diagrams showing how papers flow between extracted "
+                "dimensions (animal × sensor × ML method, etc.). Configured "
+                "per question in `research_questions.py`.")
+
+    runs = list_completed_runs()
+    if not runs:
+        st.info("No runs completed yet.")
+        st.stop()
+
+    # Filter to only questions that have sankey_diagrams declared
+    diag_questions = [q for q in QUESTIONS
+                      if q["id"] in runs and (q.get("sankey_diagrams") or [])]
+    if not diag_questions:
+        st.info("No questions have Sankey diagrams configured yet.")
+        st.stop()
+
+    qid = st.selectbox(
+        "Question",
+        [q["id"] for q in diag_questions],
+        format_func=lambda i: f"{i} — {next(q['text'][:70] for q in diag_questions if q['id'] == i)}",
+    )
+    question = next(q for q in diag_questions if q["id"] == qid)
+
+    from src.synthesis.figures import compute_sankey_data, make_sankey_figure
+    stats = get_stats(qid)
+    papers = stats["included_papers"]
+
+    if not papers:
+        st.warning("No included papers for this question.")
+        st.stop()
+
+    for spec in question["sankey_diagrams"]:
+        st.markdown(f"### {spec['title']}")
+        stages_str = " → ".join(s.replace("_", " ").title() for s in spec["stages"])
+        st.caption(f"Stages: {stages_str}")
+        try:
+            data = compute_sankey_data(
+                papers,
+                spec["stages"],
+                max_per_stage=spec.get("max_per_stage", 8),
+            )
+            fig = make_sankey_figure(data, spec["title"], spec["stages"])
+            st.plotly_chart(fig, use_container_width=True)
+        except Exception as e:
+            st.error(f"Could not render: {type(e).__name__}: {e}")
+
+
+# =============================================================
 # PAGE: REPORT
 # =============================================================
 elif page == "📄 Report":
@@ -392,51 +444,6 @@ elif page == "📄 Report":
             file_name=f"{qid}_report.md", mime="text/markdown",
         )
         st.markdown(text)
-
-
-# =============================================================
-# PAGE: COMPARE QUESTIONS
-# =============================================================
-elif page == "🔍 Compare questions":
-    st.title("Compare questions")
-    runs = list_completed_runs()
-    if len(runs) < 2:
-        st.info("Need at least 2 completed runs to compare.")
-        st.stop()
-
-    selected = st.multiselect("Pick questions", runs, default=runs)
-    if not selected:
-        st.stop()
-
-    rows = []
-    for qid in selected:
-        s = get_stats(qid)
-        p = s["prisma"]
-        rows.append({
-            "Question":  qid,
-            "Identified": p["identified"],
-            "Included":   p["included"],
-            "Excluded":   p["excluded"],
-            "Extracted":  p["extracted_total"],
-            "Q1 papers":  s["quartile_distribution"].get("Q1", 0),
-            "Top sensor": next(iter(s["top_sensor_types"]), "—"),
-            "Top method": next(iter(s["top_ml_methods"]), "—"),
-        })
-    st.dataframe(pd.DataFrame(rows), use_container_width=True)
-
-    # Stacked sensor bars across questions
-    st.markdown("### Sensor types per question")
-    bars = []
-    for qid in selected:
-        s = get_stats(qid)
-        for sensor, count in s["top_sensor_types"].items():
-            bars.append({"question": qid, "sensor": sensor, "count": count})
-    if bars:
-        st.plotly_chart(
-            px.bar(pd.DataFrame(bars), x="question", y="count", color="sensor",
-                   title="Sensor types per question"),
-            use_container_width=True,
-        )
 
 
 # =============================================================

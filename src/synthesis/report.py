@@ -11,6 +11,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.llm import get_llm
 from src.synthesis.statistics import compute_statistics
+from src.synthesis.figures import generate_figures_for_question
 
 
 def _format_dist(d: dict, total: int | None = None, hide_if_single: bool = False) -> str:
@@ -216,16 +217,38 @@ def _papers_summary_for_llm(papers: list[dict]) -> list[dict]:
     return out
 
 
-def generate_report(question_id: str, question_text: str, output_path: str | None = None) -> str:
+def generate_report(
+    question_id: str,
+    question_text: str,
+    output_path: str | None = None,
+    question: dict | None = None,
+) -> str:
     """
     Generate the full Markdown SLR report for a question.
     Saves it to output_path (default: data/runs/{qid}/report.md) and returns the text.
+
+    `question` is the full dict from research_questions.py — needed for
+    sankey_diagrams configuration. Falls back to looking it up by id.
     """
+    if question is None:
+        from research_questions import QUESTIONS
+        question = next((q for q in QUESTIONS if q["id"] == question_id), None) or {
+            "id": question_id, "text": question_text
+        }
+
     print(f"[Report] Computing statistics for {question_id}...")
     stats = compute_statistics(question_id)
 
     extracted_summary = _papers_summary_for_llm(stats["extracted_papers"])
     stats_summary = _format_stats_for_llm(stats)
+
+    # --- Generate Sankey figures ---
+    print(f"[Report] Generating Sankey figures...")
+    try:
+        figures = generate_figures_for_question(question, stats["included_papers"])
+    except Exception as e:
+        print(f"  [Figures] failed: {type(e).__name__}: {e}")
+        figures = []
 
     print(f"[Report] Generating LLM narrative sections...")
     llm = get_llm(temperature=0.3, json_mode=False)
@@ -295,6 +318,18 @@ def generate_report(question_id: str, question_text: str, output_path: str | Non
             pretty = fname.replace("_", " ").title()
             md.append(f"\n### 4.bis.{i} {pretty}\n")
             md.append(_format_dist(dist) or "_(no data)_\n")
+
+    # Sankey / flow diagrams
+    if figures:
+        md.append("\n## 4.ter Flow diagrams\n")
+        for f in figures:
+            md.append(f"\n### {f['title']}\n")
+            stages_str = " → ".join(s.replace("_", " ").title() for s in f["stages"])
+            md.append(f"_Stages:_ {stages_str}\n")
+            if f.get("rel_path"):
+                md.append(f"\n![{f['title']}]({f['rel_path']})\n")
+            else:
+                md.append("_(figure could not be rendered)_\n")
 
     md.append("\n## 5. Results\n")
     md.append(sections["Results"] + "\n")

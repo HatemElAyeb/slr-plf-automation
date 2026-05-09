@@ -24,6 +24,18 @@ QUESTIONS = [
                 "strings like 'camera + CNN', 'accelerometer + LSTM', 'RFID + Random Forest'."
             ),
         },
+        "sankey_diagrams": [
+            {
+                "title": "Animals × Sensors × ML methods",
+                "stages": ["animal_species", "sensor_types", "ml_methods"],
+                "max_per_stage": 8,
+            },
+            {
+                "title": "Application domain × Sensors",
+                "stages": ["application_domains", "sensor_types"],
+                "max_per_stage": 8,
+            },
+        ],
     },
     {
         "id": "q2_technical",
@@ -43,6 +55,18 @@ QUESTIONS = [
                 "ketosis, estrus, calving, heat stress, feed efficiency)."
             ),
         },
+        "sankey_diagrams": [
+            {
+                "title": "Predictor × Outcome × ML method",
+                "stages": ["predictor_variables", "predicted_outcomes", "ml_methods"],
+                "max_per_stage": 8,
+            },
+            {
+                "title": "Sensor × Predictor variable",
+                "stages": ["sensor_types", "predictor_variables"],
+                "max_per_stage": 8,
+            },
+        ],
     },
     {
         "id": "q3_outcomes",
@@ -66,6 +90,18 @@ QUESTIONS = [
                 "automated milking, real-time alerts, decision-support system)."
             ),
         },
+        "sankey_diagrams": [
+            {
+                "title": "Intervention × Welfare indicator",
+                "stages": ["intervention_type", "welfare_indicators"],
+                "max_per_stage": 8,
+            },
+            {
+                "title": "Intervention × Sustainability metric",
+                "stages": ["intervention_type", "sustainability_metrics"],
+                "max_per_stage": 8,
+            },
+        ],
     },
     {
         "id": "q4_outcomes",
@@ -85,6 +121,18 @@ QUESTIONS = [
                 "Concrete use case described in the paper (1-2 short phrases)."
             ),
         },
+        "sankey_diagrams": [
+            {
+                "title": "Application category × Sensor × Animal",
+                "stages": ["application_categories", "sensor_types", "animal_species"],
+                "max_per_stage": 8,
+            },
+            {
+                "title": "Application category × ML method",
+                "stages": ["application_categories", "ml_methods"],
+                "max_per_stage": 8,
+            },
+        ],
     },
     {
         "id": "q5_gaps",
@@ -114,6 +162,18 @@ QUESTIONS = [
                 "barriers (free text)."
             ),
         },
+        "sankey_diagrams": [
+            {
+                "title": "Stakeholder × Barrier category",
+                "stages": ["stakeholders", "barrier_categories"],
+                "max_per_stage": 8,
+            },
+            {
+                "title": "Barrier category × Proposed solution",
+                "stages": ["barrier_categories", "proposed_solutions"],
+                "max_per_stage": 8,
+            },
+        ],
     },
     {
         "id": "q6_future",
@@ -142,5 +202,17 @@ QUESTIONS = [
                 "fidelity metric, accuracy under perturbation, qualitative inspection)."
             ),
         },
+        "sankey_diagrams": [
+            {
+                "title": "Model type × XAI method",
+                "stages": ["model_types", "xai_methods"],
+                "max_per_stage": 8,
+            },
+            {
+                "title": "Robustness technique × Evaluation approach",
+                "stages": ["robustness_techniques", "evaluation_approach"],
+                "max_per_stage": 8,
+            },
+        ],
     },
 ]
