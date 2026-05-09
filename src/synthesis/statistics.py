@@ -139,6 +139,26 @@ def compute_statistics(question_id: str) -> dict:
             if n:
                 method_counter[n] += 1
 
+    # Question-specific custom field counters
+    # custom_field_counters[field_name] = Counter()
+    custom_field_counters: dict[str, Counter] = {}
+    for p in included:
+        cf = p.get("custom_fields") or {}
+        for fname, values in cf.items():
+            if not values:
+                continue
+            counter = custom_field_counters.setdefault(fname, Counter())
+            for v in values:
+                if isinstance(v, str):
+                    s = v.strip().lower()
+                    if s:
+                        counter[s] += 1
+
+    custom_field_top = {
+        fname: dict(c.most_common(15))
+        for fname, c in custom_field_counters.items()
+    }
+
     return {
         "prisma": prisma,
         "source_distribution":      dict(source_dist.most_common()),
@@ -149,6 +169,7 @@ def compute_statistics(question_id: str) -> dict:
         "top_animal_species":       dict(species_counter.most_common(15)),
         "top_sensor_types":         dict(sensor_counter.most_common(15)),
         "top_ml_methods":           dict(method_counter.most_common(15)),
+        "custom_fields":            custom_field_top,
         "included_papers":          included,
         "extracted_papers":         extracted,
     }

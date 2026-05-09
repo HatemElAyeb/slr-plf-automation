@@ -170,6 +170,16 @@ def _format_stats_for_llm(stats: dict) -> str:
     for k, v in stats["top_ml_methods"].items():
         lines.append(f"  - {k}: {v}")
 
+    # Question-specific custom fields
+    custom = stats.get("custom_fields") or {}
+    for fname, dist in custom.items():
+        if not dist:
+            continue
+        lines.append("")
+        lines.append(f"Top {fname.replace('_', ' ')} (question-specific):")
+        for k, v in dist.items():
+            lines.append(f"  - {k}: {v}")
+
     return "\n".join(lines)
 
 
@@ -276,6 +286,15 @@ def generate_report(question_id: str, question_text: str, output_path: str | Non
     md.append(_format_dist(stats["top_sensor_types"]))
     md.append("\n### 4.3 ML methods\n")
     md.append(_format_dist(stats["top_ml_methods"]))
+
+    # Question-specific custom field distributions
+    custom = stats.get("custom_fields") or {}
+    if custom:
+        md.append("\n## 4.bis Question-specific extracted fields\n")
+        for i, (fname, dist) in enumerate(custom.items(), start=1):
+            pretty = fname.replace("_", " ").title()
+            md.append(f"\n### 4.bis.{i} {pretty}\n")
+            md.append(_format_dist(dist) or "_(no data)_\n")
 
     md.append("\n## 5. Results\n")
     md.append(sections["Results"] + "\n")
