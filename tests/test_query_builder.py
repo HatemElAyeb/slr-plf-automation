@@ -5,7 +5,7 @@ Run: python test_query_builder.py
 import sys
 import os
 import json
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from src.query_builder import build_queries
 

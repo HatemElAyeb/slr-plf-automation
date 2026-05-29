@@ -154,6 +154,9 @@ data/runs/*/figures/
 data/runs/master_report.md
 # (override.json files are tracked — they're pipeline inputs)
 
+# LaTeX thesis report (separate deliverable, kept out of code repo)
+report/
+
 # Spyder project settings
 .spyderproject
 .spyproject

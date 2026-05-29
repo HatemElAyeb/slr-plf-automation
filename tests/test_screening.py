@@ -5,7 +5,7 @@ Requires: Ollama running with mistral pulled
 """
 import sys
 import os
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from src.models import Paper, ScreeningStatus
 from src.screening.screener import AbstractScreener

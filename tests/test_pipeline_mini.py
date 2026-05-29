@@ -5,7 +5,7 @@ Run: python test_pipeline_mini.py
 """
 import sys
 import os
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from src.collectors.collector import LiteratureCollector
 from src.indexer.indexer import QdrantIndexer
